@@ -505,7 +505,7 @@ function renderLedger() {
                         ${acBadge}${fuelBadge}
                     </div>
                     <div class="trip-costs">
-                        <span>Gross: <b style="color:#d1d5db">₦${trip.gross.toLocaleString()}</b></span>
+                        <span>Gross: <b style="color:var(--text-primary)">₦${trip.gross.toLocaleString()}</b></span>
                         <span class="trip-sep">|</span>
                         <span>Fee: <b style="color:var(--red)">₦${Math.round(trip.platDeduct).toLocaleString()}</b></span>
                         <span class="trip-sep">|</span>
@@ -527,7 +527,7 @@ function renderLedger() {
                 </div>
             </div>
             <div class="trip-eco">
-                <div>Rev/km<b style="color:#d1d5db">₦${Math.round(trip.revPkm)}</b></div>
+                <div>Rev/km<b style="color:var(--text-primary)">₦${Math.round(trip.revPkm)}</b></div>
                 <div>Cost/km<b style="color:var(--red)">₦${Math.round(trip.costPkm)}</b></div>
                 <div>Profit/km<b style="color:var(--green)">₦${Math.round(trip.profPkm)}</b></div>
                 <div>Margin<b style="color:${mColor}">${trip.margin.toFixed(0)}%</b></div>
@@ -664,6 +664,15 @@ function shareToWhatsApp() {
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
+// ── Theme ──
+function toggleTheme() {
+    const isLight = document.documentElement.classList.toggle('light');
+    localStorage.setItem('dp_theme', isLight ? 'light' : 'dark');
+    document.getElementById('metaThemeColor').setAttribute('content', isLight ? '#f0f4f1' : '#030d05');
+    document.getElementById('iconSun').style.display  = isLight ? 'none' : '';
+    document.getElementById('iconMoon').style.display = isLight ? ''     : 'none';
+}
+
 // ── Bottom sheet ──
 function toggleSheet() {
     isSheetOpen = !isSheetOpen;
@@ -672,6 +681,16 @@ function toggleSheet() {
 }
 
 // ── Init ──
+// Sync theme icon with persisted preference
+(function () {
+    const isLight = document.documentElement.classList.contains('light');
+    if (isLight) {
+        document.getElementById('iconSun').style.display  = 'none';
+        document.getElementById('iconMoon').style.display = '';
+        document.getElementById('metaThemeColor').setAttribute('content', '#f0f4f1');
+    }
+})();
+
 loadLedger();
 
 // Restore fixed cost inputs from saved state
