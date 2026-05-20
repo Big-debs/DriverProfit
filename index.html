@@ -5,429 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Driver Profit Calculator</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 
-    <style>
-        /* ── Reset ── */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-            --gold:          #e5c158;
-            --gold-dim:      #c9a840;
-            --gold-muted:    rgba(229,193,88,0.12);
-            --surface-deep:  #030d05;
-            --surface-card:  #14271a;
-            --surface-raised:#1c3222;
-            --border:        #243b2a;
-            --red:           #f05252;
-            --red-dim:       rgba(240,82,82,0.12);
-            --green:         #34d399;
-            --amber:         #f59e0b;
-            --blue:          #60a5fa;
-            --purple:        #a78bfa;
-        }
-
-        body {
-            font-family: 'Fira Sans', sans-serif;
-            background: var(--surface-deep);
-            color: #f3f4f6;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-        }
-        .mono { font-family: 'Fira Code', monospace; }
-
-        /* Grain */
-        body::before {
-            content: ''; position: fixed; inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-            pointer-events: none; z-index: 999; opacity: .6;
-        }
-
-        /* ═══════ SHELL ═══════ */
-        .app {
-            max-width: 440px; margin: 0 auto;
-            min-height: 100vh; background: var(--surface-deep);
-            position: relative; overflow: hidden;
-            display: flex; flex-direction: column;
-        }
-
-        /* ═══════ HEADER ═══════ */
-        .header {
-            position: sticky; top: 0; z-index: 10;
-            padding: 20px 20px 16px;
-            background:
-                radial-gradient(ellipse 70% 90% at 50% 0%, rgba(229,193,88,.07) 0%, transparent 70%),
-                var(--surface-card);
-            border-bottom: 1px solid var(--border);
-            box-shadow: 0 4px 24px rgba(0,0,0,.5);
-        }
-        .header-label {
-            display: flex; align-items: center; justify-content: center;
-            gap: 6px; margin-bottom: 8px;
-        }
-        .header-label svg { width: 14px; height: 14px; color: var(--gold); }
-        .header-label span {
-            font-size: 10px; font-weight: 800; letter-spacing: .14em;
-            text-transform: uppercase; color: rgba(229,193,88,.7);
-        }
-        #dailyNetProfit {
-            font-size: 2.6rem; font-weight: 900; letter-spacing: -.04em;
-            text-align: center; line-height: 1; color: var(--green);
-            text-shadow: 0 0 28px rgba(52,211,153,.25);
-        }
-
-        .summary-bar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 16px; margin-top: 12px;
-            background: rgba(28,50,34,.5);
-            border: 1px solid rgba(36,59,42,.7); border-radius: 12px;
-            font-size: 11px;
-        }
-        .summary-cell { display: flex; flex-direction: column; align-items: center; }
-        .summary-cell .s-lbl { color: #6b7280; font-weight: 600; line-height: 1; margin-bottom: 2px; }
-        .summary-cell .s-val { font-weight: 900; font-family: 'Fira Code', monospace; }
-        .summary-div { width: 1px; height: 16px; background: var(--border); }
-
-        .btn-sheet {
-            margin-top: 12px; width: 100%; padding: 10px 0;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            font-size: 11px; font-weight: 700; color: var(--gold);
-            background: var(--surface-raised);
-            border: 1px solid var(--border); border-radius: 12px;
-            cursor: pointer; transition: background .15s, border-color .15s;
-        }
-        .btn-sheet svg { width: 14px; height: 14px; }
-        .btn-sheet:hover { background: var(--border); border-color: rgba(229,193,88,.3); }
-
-        /* ═══════ SCROLL BODY ═══════ */
-        .body-scroll {
-            padding: 16px; display: flex; flex-direction: column; gap: 14px;
-            padding-bottom: 120px; overflow-y: auto; flex: 1;
-        }
-        .body-scroll::-webkit-scrollbar { width: 3px; }
-        .body-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-        /* ═══════ CARDS ═══════ */
-        .card {
-            background: linear-gradient(160deg, rgba(28,50,34,.6) 0%, rgba(20,39,26,.3) 100%);
-            border: 1px solid var(--border); border-radius: 18px; padding: 16px;
-        }
-        .card-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 16px;
-        }
-        .card-body { display: flex; flex-direction: column; gap: 14px; }
-        .section-label {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 10px; font-weight: 800; letter-spacing: .12em;
-            text-transform: uppercase; color: var(--gold);
-        }
-        .section-label svg { width: 14px; height: 14px; }
-        .section-note { font-size: 10px; color: #4b5563; font-weight: 500; }
-
-        /* ═══════ FORM ELEMENTS ═══════ */
-        .field-label {
-            display: block; font-size: 11px; font-weight: 700;
-            color: #9ca3af; margin-bottom: 6px;
-        }
-        .input-wrap { position: relative; }
-        .input-prefix {
-            position: absolute; inset-y: 0; left: 0;
-            display: flex; align-items: center; padding-left: 12px;
-            font-weight: 700; font-size: 14px; pointer-events: none;
-        }
-        input[type="number"], select {
-            width: 100%; background: var(--surface-deep);
-            border: 1px solid var(--border); color: #fff;
-            border-radius: 12px; padding: 10px 12px;
-            font-family: 'Fira Code', monospace; font-weight: 700; font-size: 13px;
-            -webkit-appearance: none; appearance: none;
-            transition: box-shadow .15s;
-        }
-        input[type="number"]:focus, select:focus {
-            outline: none; box-shadow: 0 0 0 1.5px var(--gold);
-        }
-        input[type="number"]::placeholder { color: #374151; }
-        .has-prefix input[type="number"] { padding-left: 26px; }
-        .gross-wrap .input-prefix { font-size: 16px; font-weight: 900; color: var(--gold); padding-left: 14px; }
-        .gross-wrap input[type="number"] { font-size: 16px; font-weight: 900; padding: 12px 12px 12px 36px; }
-
-        select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 10px center; background-size: 14px;
-            padding-right: 28px; cursor: pointer;
-            font-family: 'Fira Sans', sans-serif; font-size: 11px;
-        }
-
-        /* ═══════ SLIDER ═══════ */
-        .slider-row {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
-        }
-        .slider-row .s-lbl { font-size: 11px; font-weight: 700; color: #9ca3af; }
-        .slider-row .s-val { font-size: 11px; font-weight: 700; color: var(--gold); font-family: 'Fira Code', monospace; }
-        input[type="range"] {
-            -webkit-appearance: none; appearance: none;
-            background: transparent; cursor: pointer; height: 20px; width: 100%;
-        }
-        input[type="range"]::-webkit-slider-runnable-track {
-            height: 4px; border-radius: 2px;
-            background: linear-gradient(to right, var(--gold) var(--pct,25%), var(--border) var(--pct,25%));
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-            background: var(--gold); border: 2.5px solid var(--surface-deep);
-            cursor: pointer; margin-top: -7px;
-            transition: transform .1s, box-shadow .1s;
-        }
-        input[type="range"]:active::-webkit-slider-thumb {
-            transform: scale(1.25); box-shadow: 0 0 0 6px rgba(229,193,88,.18);
-        }
-        .slider-ticks {
-            display: flex; justify-content: space-between;
-            font-size: 9px; color: #4b5563; font-weight: 600; margin-top: 2px; padding: 0 2px;
-        }
-
-        /* ═══════ PLATFORM TABS ═══════ */
-        .platform-tabs {
-            display: grid; grid-template-columns: repeat(4,1fr); gap: 4px;
-            padding: 4px; background: var(--surface-deep);
-            border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;
-        }
-        .platform-tab {
-            padding: 8px 0; font-size: 11px; font-weight: 600;
-            border-radius: 8px; border: 1px solid transparent;
-            cursor: pointer; background: none; color: #6b7280;
-            transition: all .15s;
-        }
-        .platform-tab:hover { color: #d1d5db; }
-        .platform-tab.active {
-            background: var(--gold-muted); color: var(--gold);
-            border-color: rgba(229,193,88,.35); font-weight: 700;
-        }
-
-        /* ═══════ GRID ═══════ */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        /* ═══════ INSET BLOCKS ═══════ */
-        .inset-block {
-            background: rgba(3,13,5,.6); border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
-        }
-        .inset-row { display: flex; align-items: center; justify-content: space-between; }
-        .inset-icon { width: 16px; height: 16px; flex-shrink: 0; transition: color .2s; }
-        .inset-label-wrap { display: flex; align-items: center; gap: 8px; }
-        .inset-title { font-size: 11px; font-weight: 700; color: #d1d5db; line-height: 1; }
-        .inset-sub   { font-size: 9px; color: #4b5563; margin-top: 3px; }
-
-        /* ═══════ STEPPERS ═══════ */
-        .stepper { display: flex; align-items: center; gap: 6px; }
-        .stepper-btn {
-            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-            background: var(--surface-raised); border: 1px solid var(--border);
-            border-radius: 8px; color: #fff; font-weight: 700; font-size: 14px;
-            cursor: pointer; user-select: none; transition: background .1s, transform .1s;
-        }
-        .stepper-btn:active { background: var(--surface-deep); transform: scale(.93); }
-        .stepper-val {
-            font-size: 14px; font-weight: 900; font-family: 'Fira Code', monospace;
-            width: 48px; text-align: center;
-        }
-
-        /* ═══════ AC TOGGLE ═══════ */
-        .ac-toggle {
-            position: relative; width: 40px; height: 22px;
-            background: var(--border); border-radius: 11px;
-            cursor: pointer; transition: background .2s; border: 1px solid transparent; flex-shrink: 0;
-        }
-        .ac-toggle::after {
-            content: ''; position: absolute; top: 2px; left: 2px;
-            width: 16px; height: 16px; border-radius: 50%; background: #6b7280;
-            transition: transform .2s, background .2s;
-        }
-        .ac-toggle.on { background: rgba(96,165,250,.2); border-color: rgba(96,165,250,.4); }
-        .ac-toggle.on::after { transform: translateX(18px); background: var(--blue); }
-        .ac-penalty-row {
-            border-top: 1px solid rgba(36,59,42,.6); margin-top: 10px; padding-top: 10px;
-            display: none; align-items: center; justify-content: space-between;
-        }
-        .ac-penalty-row.show { display: flex; }
-
-        /* ═══════ PREVIEW BOX ═══════ */
-        .preview-box {
-            background: var(--surface-deep); border: 1px solid var(--border);
-            border-radius: 12px; overflow: hidden;
-        }
-        .preview-grid { display: grid; grid-template-columns: 1fr 1fr; }
-        .preview-cell { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--border); }
-        .preview-cell:nth-child(odd) { border-right: 1px solid var(--border); }
-        .preview-cell.last { border-bottom: none; }
-        .preview-cell .p-lbl {
-            display: block; font-size: 8px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: .08em; color: #6b7280; margin-bottom: 4px;
-        }
-        .preview-cell .p-val { font-size: 13px; font-weight: 900; font-family: 'Fira Code', monospace; }
-        .economics-strip { display: grid; grid-template-columns: repeat(4,1fr); background: rgba(13,31,16,.4); }
-        .eco-cell { padding: 8px 4px; text-align: center; font-size: 9px; color: #4b5563; }
-        .eco-cell:not(:last-child) { border-right: 1px solid var(--border); }
-        .eco-cell .e-lbl { display: block; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
-        .eco-cell .e-val { font-size: 10px; font-weight: 700; font-family: 'Fira Code', monospace; }
-
-        /* ═══════ BUTTONS ═══════ */
-        .btn-gold {
-            width: 100%; padding: 14px 0;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            font-size: 14px; font-weight: 800;
-            background: var(--gold); color: var(--surface-deep);
-            border: none; border-radius: 14px; cursor: pointer;
-            box-shadow: 0 4px 16px rgba(229,193,88,.25);
-            transition: background .15s, box-shadow .15s, transform .1s;
-        }
-        .btn-gold svg { width: 16px; height: 16px; }
-        .btn-gold:hover { background: #d4af37; box-shadow: 0 4px 22px rgba(229,193,88,.38); }
-        .btn-gold:active { transform: scale(.98); }
-        .btn-ghost-red {
-            font-size: 10px; font-weight: 700; color: var(--red);
-            background: none; border: none; cursor: pointer;
-            padding: 4px 8px; border-radius: 6px; transition: background .15s;
-        }
-        .btn-ghost-red:hover { background: var(--red-dim); }
-
-        /* ═══════ LEDGER ═══════ */
-        .ledger-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .trip-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; padding-right: 2px; }
-        .trip-list::-webkit-scrollbar { width: 3px; }
-        .trip-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-        .empty-state {
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 12px; text-align: center; padding: 40px 0;
-        }
-        .empty-state svg { width: 40px; height: 40px; color: var(--border); }
-        .empty-state p { font-size: 12px; color: #4b5563; font-weight: 500; line-height: 1.5; }
-        @keyframes emptyFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-        .empty-state svg { animation: emptyFloat 3s ease-in-out infinite; }
-
-        @keyframes tripIn { from{opacity:0;transform:translateY(-8px) scale(.98)} to{opacity:1;transform:none} }
-        .trip-row {
-            background: rgba(3,13,5,.6); border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
-            display: flex; flex-direction: column; gap: 8px;
-            animation: tripIn .28s cubic-bezier(.16,1,.3,1) both;
-        }
-        .trip-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-        .trip-info { flex: 1; }
-        .trip-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-        .trip-name { font-size: 11px; font-weight: 700; color: #e5e7eb; }
-        .badge { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-family: 'Fira Code', monospace; }
-        .badge-gray { background: var(--border); color: #9ca3af; }
-        .badge-ac   { background: rgba(96,165,250,.15); color: var(--blue); border: 1px solid rgba(96,165,250,.3); }
-        .trip-costs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 10px; color: #6b7280; }
-        .trip-costs b { font-weight: 700; font-family: 'Fira Code', monospace; }
-        .trip-sep { color: var(--border); }
-        .trip-net-col { display: flex; align-items: center; gap: 8px; }
-        .trip-net-lbl { font-size: 9px; color: #4b5563; display: block; margin-bottom: 2px; }
-        .trip-net-val { font-size: 13px; font-weight: 900; font-family: 'Fira Code', monospace; }
-        .trip-del {
-            padding: 6px; border-radius: 8px; background: none; border: none;
-            cursor: pointer; color: #4b5563; transition: background .15s, color .15s;
-        }
-        .trip-del:hover { background: var(--red-dim); color: var(--red); }
-        .trip-del svg { width: 14px; height: 14px; display: block; }
-        .trip-eco {
-            display: grid; grid-template-columns: repeat(4,1fr); gap: 4px;
-            padding-top: 8px; border-top: 1px solid rgba(36,59,42,.6);
-            text-align: center; font-size: 9px; color: #6b7280;
-        }
-        .trip-eco b { display: block; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 10px; }
-
-        /* ═══════ BACKDROP + SHEET ═══════ */
-        .backdrop {
-            position: absolute; inset: 0;
-            background: rgba(3,13,5,.75); backdrop-filter: blur(2px);
-            z-index: 20; opacity: 0; pointer-events: none; transition: opacity .3s;
-        }
-        .backdrop.show { opacity: 1; pointer-events: all; }
-
-        .bottom-sheet {
-            position: absolute; bottom: 0; width: 100%; height: 82%; z-index: 30;
-            border-radius: 40px 40px 0 0;
-            background: linear-gradient(175deg, #1c3222 0%, #14271a 40%, #0d1f10 100%);
-            border-top: 1px solid #2d4d36;
-            display: flex; flex-direction: column;
-            transform: translateY(100%);
-            transition: transform .4s cubic-bezier(.16,1,.3,1);
-        }
-        .bottom-sheet.open { transform: translateY(0); }
-        .sheet-handle { display: flex; justify-content: center; padding: 16px 0 12px; cursor: pointer; }
-        .sheet-handle span { width: 48px; height: 4px; background: var(--border); border-radius: 2px; }
-        .sheet-body { padding: 0 24px 32px; overflow-y: auto; flex: 1; }
-        .sheet-body::-webkit-scrollbar { width: 3px; }
-        .sheet-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-        .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-        .sheet-icon {
-            width: 42px; height: 42px; border-radius: 14px;
-            background: var(--border); color: var(--gold);
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .sheet-icon svg { width: 20px; height: 20px; }
-        .sheet-title { font-size: 17px; font-weight: 900; color: #fff; letter-spacing: -.02em; line-height: 1; }
-        .sheet-subtitle { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; margin-top: 4px; }
-
-        /* Statement rows */
-        .stmt-rows { display: flex; flex-direction: column; gap: 12px; }
-        .stmt-row { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-        .stmt-inner { display: flex; align-items: flex-end; justify-content: space-between; }
-        .stmt-left { flex: 1; margin-right: 16px; }
-        .stmt-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
-        .stmt-val { font-size: 21px; font-weight: 900; font-family: 'Fira Code', monospace; }
-        .stmt-badge {
-            font-size: 10px; font-weight: 700; padding: 4px 8px;
-            border-radius: 8px; white-space: nowrap; font-family: 'Fira Code', monospace;
-        }
-        .deduct-bar { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; margin-top: 8px; }
-        .deduct-fill { height: 100%; border-radius: 2px; transition: width .6s cubic-bezier(.34,1.56,.64,1); }
-
-        .stmt-net {
-            border-radius: 18px; padding: 16px;
-            background: linear-gradient(135deg, rgba(52,211,153,.08) 0%, rgba(28,50,34,.6) 100%);
-            border: 1px solid rgba(52,211,153,.15);
-            display: flex; align-items: flex-end; justify-content: space-between;
-        }
-        .net-lbl { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--green); margin-bottom: 4px; }
-        .net-val  { font-size: 1.7rem; font-weight: 900; font-family: 'Fira Code', monospace; color: #6ee7b7; line-height: 1; }
-        .hourly-lbl { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); margin-bottom: 4px; text-align: right; }
-        .hourly-val { font-size: 21px; font-weight: 900; font-family: 'Fira Code', monospace; color: var(--gold); text-align: right; }
-
-        .unit-grid {
-            background: rgba(3,13,5,.6); border: 1px solid var(--border); border-radius: 18px; padding: 16px;
-        }
-        .unit-grid-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); margin-bottom: 12px; }
-        .unit-cells { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .unit-cell { background: rgba(28,50,34,.7); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
-        .unit-cell .u-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px; }
-        .unit-cell .u-val { font-size: 13px; font-weight: 700; font-family: 'Fira Code', monospace; }
-
-        .btn-dismiss {
-            margin-top: 32px; width: 100%; padding: 16px;
-            font-size: 14px; font-weight: 700; color: var(--gold);
-            background: var(--surface-raised); border: 1px solid rgba(229,193,88,.2);
-            border-radius: 14px; cursor: pointer; transition: background .15s, border-color .15s;
-        }
-        .btn-dismiss:hover { background: var(--gold-muted); border-color: rgba(229,193,88,.4); }
-
-        /* ═══════ ANIMATIONS ═══════ */
-        @keyframes countPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
-        .profit-pulse { animation: countPulse .35s ease; }
-        @keyframes flashGold { 0%,100%{background:var(--gold)} 40%{background:#fff} }
-        .btn-flash { animation: flashGold .35s ease; }
-
-        /* ═══════ MISC ═══════ */
-        #maintEstimate {
-            font-size: 9px; text-align: right; margin-top: 8px;
-            font-weight: 500; font-family: 'Fira Code', monospace; color: #4b5563;
-        }
-    </style>
-    
     <!-- Vercel Web Analytics -->
     <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
@@ -503,6 +82,19 @@
 
             <div class="card-body">
 
+                <!-- Fuel Type -->
+                <div>
+                    <div class="slider-row">
+                        <span class="s-lbl">Fuel Type</span>
+                    </div>
+                    <div class="platform-tabs">
+                        <button id="ftPetrol"   class="platform-tab active" onclick="setFuelType('petrol')">Petrol</button>
+                        <button id="ftDiesel"   class="platform-tab"        onclick="setFuelType('diesel')">Diesel</button>
+                        <button id="ftCNG"      class="platform-tab"        onclick="setFuelType('cng')">CNG</button>
+                        <button id="ftElectric" class="platform-tab"        onclick="setFuelType('electric')">Electric</button>
+                    </div>
+                </div>
+
                 <!-- Platform -->
                 <div>
                     <div class="slider-row">
@@ -527,7 +119,7 @@
                 <!-- Fuel + Vehicle -->
                 <div class="grid-2">
                     <div>
-                        <label class="field-label">Fuel Price (₦/L)</label>
+                        <label id="fuelPriceLabel" class="field-label">Fuel Price (₦/L)</label>
                         <div class="input-wrap has-prefix">
                             <span class="input-prefix" style="color:var(--red)">₦</span>
                             <input type="number" id="fuelPrice" inputmode="decimal" value="850"
@@ -537,14 +129,7 @@
                     <div>
                         <label class="field-label">Vehicle</label>
                         <select id="efficiency" onchange="handlePresetSelect(this.value)">
-                            <option value="11">Corolla — 11 km/L</option>
-                            <option value="13">Elantra — 13 km/L</option>
-                            <option value="15">Rio — 15 km/L</option>
-                            <option value="18">S-Presso — 18 km/L</option>
-                            <option value="8">Sienna — 8 km/L</option>
-                            <option value="9">Lexus ES350 — 9 km/L</option>
-                            <option value="22">Keke — 22 km/L</option>
-                            <option value="custom">Custom</option>
+                            <!-- Populated by setFuelType() -->
                         </select>
                     </div>
                 </div>
@@ -552,8 +137,8 @@
                 <!-- Efficiency fine-tune -->
                 <div class="inset-block inset-row">
                     <div>
-                        <p class="inset-title">Fuel Efficiency</p>
-                        <p class="inset-sub">Fine-tune km per litre</p>
+                        <p id="efficiencyTitle" class="inset-title">Fuel Efficiency</p>
+                        <p id="efficiencySub" class="inset-sub">Fine-tune km per litre</p>
                     </div>
                     <div class="stepper">
                         <button type="button" class="stepper-btn" onclick="adjustEfficiency(-0.5)">−</button>
@@ -562,6 +147,36 @@
                                oninput="handleManualEfficiencyInput(this.value)">
                         <button type="button" class="stepper-btn" onclick="adjustEfficiency(0.5)">+</button>
                     </div>
+                </div>
+
+                <!-- Engine Size Helper -->
+                <div id="engineSizeBlock" class="inset-block inset-row">
+                    <div class="inset-label-wrap">
+                        <svg class="inset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                             style="color:var(--gold);opacity:.7">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+                        </svg>
+                        <div>
+                            <p class="inset-title">Engine Size</p>
+                            <p class="inset-sub">Auto-sets typical efficiency</p>
+                        </div>
+                    </div>
+                    <select id="engineSize" onchange="handleEngineSizeSelect(this.value)"
+                        <option value="">Pick size</option>
+                        <option value="0.8">0.8L  (800cc)</option>
+                        <option value="1.0">1.0L  (1000cc)</option>
+                        <option value="1.2">1.2L  (1200cc)</option>
+                        <option value="1.4">1.4L  (1400cc)</option>
+                        <option value="1.5">1.5L  (1500cc)</option>
+                        <option value="1.6">1.6L  (1600cc)</option>
+                        <option value="1.8">1.8L  (1800cc)</option>
+                        <option value="2.0">2.0L  (2000cc)</option>
+                        <option value="2.4">2.4L  (2400cc)</option>
+                        <option value="2.5">2.5L  (2500cc)</option>
+                        <option value="3.0">3.0L  (3000cc)</option>
+                        <option value="4.0">4.0L+ (4000cc+)</option>
+                    </select>
                 </div>
 
                 <!-- AC Toggle -->
@@ -583,7 +198,7 @@
                     <div id="acPenaltyRow" class="ac-penalty-row">
                         <div>
                             <p style="font-size:10px;font-weight:700;color:var(--blue);line-height:1">Efficiency Penalty</p>
-                            <p class="inset-sub">% drop in km/L with AC on</p>
+                            <p id="acPenaltySub" class="inset-sub">% drop in km/L with AC on</p>
                         </div>
                         <div class="stepper">
                             <button type="button" class="stepper-btn" onclick="adjustAcPenalty(-1)">−</button>
@@ -843,314 +458,6 @@
 
 </div><!-- /app -->
 
-<script>
-    // ── State ──
-    let platformFeePercentage = 25;
-    let isSheetOpen = false;
-    let ledgerTrips = [];
-    let acOn = false;
-    let acPenaltyPct = 15;
-
-    // ── DOM ──
-    const elPlatformSlider   = document.getElementById('platformSlider');
-    const elSliderValDisplay = document.getElementById('sliderValDisplay');
-    const elFuelPrice        = document.getElementById('fuelPrice');
-    const elEfficiencyPreset = document.getElementById('efficiency');
-    const elManualEfficiency = document.getElementById('manualEfficiency');
-    const elTripGross        = document.getElementById('tripGross');
-    const elTripDistance     = document.getElementById('tripDistance');
-    const elTripHours        = document.getElementById('tripHours');
-    const elMaintRateInput   = document.getElementById('maintRateInput');
-
-    const fmt = n => {
-        const abs = Math.abs(n).toLocaleString('en-NG', { maximumFractionDigits: 0 });
-        return n < 0 ? `−₦${abs}` : `₦${abs}`;
-    };
-
-    // ── Animated profit ──
-    let _lastProfit = 0;
-    function animateProfit(target) {
-        const el = document.getElementById('dailyNetProfit');
-        const start = _lastProfit, delta = target - start;
-        if (delta === 0) return;
-        const dur = 380, t0 = performance.now();
-        (function tick(now) {
-            const p = Math.min((now - t0) / dur, 1);
-            const ease = 1 - Math.pow(1 - p, 3);
-            el.style.color = target < 0 ? 'var(--red)' : 'var(--green)';
-            el.style.textShadow = target < 0
-                ? '0 0 28px rgba(240,82,82,.3)'
-                : target === 0 ? 'none' : '0 0 28px rgba(52,211,153,.25)';
-            el.textContent = fmt(Math.round(start + delta * ease));
-            if (p < 1) requestAnimationFrame(tick);
-            else { _lastProfit = target; el.textContent = fmt(target); }
-        })(t0);
-        el.classList.remove('profit-pulse');
-        void el.offsetWidth;
-        el.classList.add('profit-pulse');
-    }
-
-    // ── Platform ──
-    function setPlatform(pct, btnId) {
-        platformFeePercentage = pct;
-        elPlatformSlider.value = pct;
-        elSliderValDisplay.textContent = pct.toFixed(1) + '%';
-        syncSliderTrack(pct);
-        ['btnBolt','btnUber','btnInDrive','btnZero'].forEach(id =>
-            document.getElementById(id).classList.toggle('active', id === btnId));
-        updateCurrentTripPreview();
-    }
-    function syncSliderTrack(val) { elPlatformSlider.style.setProperty('--pct', val + '%'); }
-    function handleSliderInput(value) {
-        const v = parseFloat(value);
-        platformFeePercentage = v;
-        elSliderValDisplay.textContent = v.toFixed(1) + '%';
-        syncSliderTrack(v);
-        const map = { btnBolt:25, btnUber:20, btnInDrive:10, btnZero:0 };
-        Object.entries(map).forEach(([id, p]) =>
-            document.getElementById(id).classList.toggle('active', p === v));
-        updateCurrentTripPreview();
-    }
-
-    // ── Vehicle ──
-    function handlePresetSelect(value) {
-        if (value !== 'custom') elManualEfficiency.value = parseFloat(value).toFixed(1);
-        updateCurrentTripPreview();
-    }
-    function handleManualEfficiencyInput(value) {
-        const v = parseFloat(value) || 0;
-        let matched = false;
-        Array.from(elEfficiencyPreset.options).forEach((opt, i) => {
-            if (opt.value !== 'custom' && parseFloat(opt.value) === v) {
-                elEfficiencyPreset.selectedIndex = i; matched = true;
-            }
-        });
-        if (!matched) elEfficiencyPreset.value = 'custom';
-        updateCurrentTripPreview();
-    }
-    function adjustEfficiency(step) {
-        const v = Math.max(1, (parseFloat(elManualEfficiency.value) || 11) + step);
-        elManualEfficiency.value = v.toFixed(1);
-        handleManualEfficiencyInput(elManualEfficiency.value);
-    }
-
-    // ── AC ──
-    function toggleAC() {
-        acOn = !acOn;
-        document.getElementById('acToggle').classList.toggle('on', acOn);
-        document.getElementById('acIcon').style.color = acOn ? 'var(--blue)' : 'rgba(96,165,250,.5)';
-        document.getElementById('acPenaltyRow').classList.toggle('show', acOn);
-        const st = document.getElementById('acStatusText');
-        const fl = document.getElementById('previewFuelLabel');
-        if (acOn) {
-            st.textContent = `On — −${acPenaltyPct}% km/L`; st.style.color = 'var(--blue)';
-            fl.textContent = 'FUEL (AC ON)'; fl.style.color = 'var(--blue)';
-        } else {
-            st.textContent = 'Off — no impact'; st.style.color = '';
-            fl.textContent = 'FUEL COST'; fl.style.color = '';
-        }
-        updateCurrentTripPreview();
-    }
-    function adjustAcPenalty(step) {
-        acPenaltyPct = Math.max(1, Math.min(50, acPenaltyPct + step));
-        document.getElementById('acPenaltyDisplay').textContent = acPenaltyPct + '%';
-        if (acOn) document.getElementById('acStatusText').textContent = `On — −${acPenaltyPct}% km/L`;
-        updateCurrentTripPreview();
-    }
-
-    // ── Maintenance ──
-    function adjustMaintRate(step) {
-        const v = Math.max(0, (parseFloat(elMaintRateInput.value) || 0) + step);
-        elMaintRateInput.value = v;
-        updateCurrentTripPreview();
-    }
-
-    // ── Math ──
-    function calcTrip() {
-        const gross     = parseFloat(elTripGross.value)        || 0;
-        const distance  = parseFloat(elTripDistance.value)     || 0;
-        const hours     = parseFloat(elTripHours.value)        || 0;
-        const fuelPrice = parseFloat(elFuelPrice.value)        || 0;
-        const baseKmL   = parseFloat(elManualEfficiency.value) || 11;
-        const maintRate = parseFloat(elMaintRateInput.value)   || 0;
-
-        const effKmL    = acOn ? baseKmL * (1 - acPenaltyPct / 100) : baseKmL;
-        const platDeduct = gross * (platformFeePercentage / 100);
-        const liters    = effKmL > 0 ? distance / effKmL : 0;
-        const fuelCost  = liters * fuelPrice;
-        const maintCost = distance * maintRate;
-        const net       = gross - platDeduct - fuelCost - maintCost;
-        const revPkm    = distance > 0 ? gross / distance : 0;
-        const costPkm   = distance > 0 ? (platDeduct + fuelCost + maintCost) / distance : 0;
-        const profPkm   = distance > 0 ? net / distance : 0;
-        const margin    = gross > 0 ? (net / gross) * 100 : 0;
-        return { gross, distance, hours, liters, platDeduct, fuelCost, maintCost, net, revPkm, costPkm, profPkm, margin };
-    }
-
-    function mc(m) { return m < 15 ? 'var(--red)' : m < 30 ? 'var(--amber)' : 'var(--green)'; }
-
-    function updateCurrentTripPreview() {
-        const s = calcTrip();
-        document.getElementById('previewPlatform').textContent = fmt(s.platDeduct);
-        document.getElementById('previewFuel').textContent     = fmt(s.fuelCost);
-        document.getElementById('previewMaint').textContent    = fmt(s.maintCost);
-        const netEl = document.getElementById('previewNet');
-        netEl.textContent = fmt(s.net);
-        netEl.style.color = s.net < 0 ? 'var(--red)' : 'var(--green)';
-
-        document.getElementById('previewRevPerKm').textContent = fmt(s.revPkm);
-        document.getElementById('previewCostPerKm').textContent = fmt(s.costPkm);
-        const ppEl = document.getElementById('previewProfitPerKm');
-        ppEl.textContent = fmt(s.profPkm); ppEl.style.color = mc(s.margin);
-        const mEl = document.getElementById('previewMargin');
-        mEl.textContent = s.margin.toFixed(0) + '%'; mEl.style.color = mc(s.margin);
-
-        // Maint hint
-        const mRate = parseFloat(elMaintRateInput.value) || 0;
-        const dist  = parseFloat(elTripDistance.value)   || 0;
-        const hint  = document.getElementById('maintEstimate');
-        if (mRate > 0 && dist > 0) {
-            hint.textContent = `₦${mRate}/km × ${dist} km = ₦${Math.round(s.maintCost).toLocaleString()}`;
-            hint.style.color = 'var(--purple)';
-        } else if (mRate > 0) {
-            hint.textContent = `₦${mRate}/km — set trip distance to preview`;
-            hint.style.color = '';
-        } else {
-            hint.textContent = 'Set a rate above to track wear costs';
-            hint.style.color = '';
-        }
-    }
-
-    // ── Ledger ──
-    function addTrip() {
-        const s = calcTrip();
-        if (s.gross <= 0 && s.distance <= 0) return;
-        ledgerTrips.push({ id: Date.now(), acWasOn: acOn, ...s });
-        elTripGross.value = elTripDistance.value = elTripHours.value = '';
-        updateCurrentTripPreview();
-        renderLedger();
-        calcDailyTotals();
-        const btn = document.getElementById('addTripBtn');
-        btn.classList.add('btn-flash');
-        setTimeout(() => btn.classList.remove('btn-flash'), 380);
-    }
-
-    function deleteTrip(id) {
-        ledgerTrips = ledgerTrips.filter(t => t.id !== id);
-        renderLedger(); calcDailyTotals();
-    }
-
-    function clearLedger() { ledgerTrips = []; renderLedger(); calcDailyTotals(); }
-
-    function renderLedger() {
-        const list  = document.getElementById('tripsList');
-        const empty = document.getElementById('noTripsMessage');
-        list.querySelectorAll('.trip-row').forEach(n => n.remove());
-        if (!ledgerTrips.length) { empty.style.display = ''; return; }
-        empty.style.display = 'none';
-
-        ledgerTrips.forEach((trip, idx) => {
-            const sign    = trip.net < 0 ? 'var(--red)' : 'var(--green)';
-            const mColor  = mc(trip.margin);
-            const acBadge = trip.acWasOn ? `<span class="badge badge-ac">AC</span>` : '';
-            const mLine   = trip.maintCost > 0
-                ? `<span class="trip-sep">|</span><span>Wear: <b style="color:var(--purple)">₦${Math.round(trip.maintCost).toLocaleString()}</b></span>` : '';
-
-            const row = document.createElement('div');
-            row.className = 'trip-row';
-            row.innerHTML = `
-                <div class="trip-top">
-                    <div class="trip-info">
-                        <div class="trip-tags">
-                            <span class="trip-name">Trip #${idx + 1}</span>
-                            <span class="badge badge-gray">${trip.distance} km · ${trip.hours}h</span>
-                            ${acBadge}
-                        </div>
-                        <div class="trip-costs">
-                            <span>Gross: <b style="color:#d1d5db">₦${trip.gross.toLocaleString()}</b></span>
-                            <span class="trip-sep">|</span>
-                            <span>Fee: <b style="color:var(--red)">₦${Math.round(trip.platDeduct).toLocaleString()}</b></span>
-                            <span class="trip-sep">|</span>
-                            <span>Fuel: <b style="color:var(--amber)">₦${Math.round(trip.fuelCost).toLocaleString()}</b></span>
-                            ${mLine}
-                        </div>
-                    </div>
-                    <div class="trip-net-col">
-                        <div style="text-align:right">
-                            <span class="trip-net-lbl">Net</span>
-                            <span class="trip-net-val" style="color:${sign}">${fmt(trip.net)}</span>
-                        </div>
-                        <button class="trip-del" onclick="deleteTrip(${trip.id})">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="trip-eco">
-                    <div>Rev/km<b style="color:#d1d5db">₦${Math.round(trip.revPkm)}</b></div>
-                    <div>Cost/km<b style="color:var(--red)">₦${Math.round(trip.costPkm)}</b></div>
-                    <div>Profit/km<b style="color:var(--green)">₦${Math.round(trip.profPkm)}</b></div>
-                    <div>Margin<b style="color:${mColor}">${trip.margin.toFixed(0)}%</b></div>
-                </div>`;
-            list.appendChild(row);
-        });
-    }
-
-    // ── Totals ──
-    function calcDailyTotals() {
-        let tG=0, tD=0, tH=0, tP=0, tF=0, tL=0, tM=0, tN=0;
-        ledgerTrips.forEach(t => {
-            tG += t.gross; tD += t.distance; tH += t.hours;
-            tP += t.platDeduct; tF += t.fuelCost;
-            tL += t.liters; tM += t.maintCost; tN += t.net;
-        });
-        const hourly   = tH > 0 ? tN / tH : 0;
-        const avgPPct  = tG > 0 ? (tP / tG) * 100 : platformFeePercentage;
-        const rPkm     = tD > 0 ? tG / tD : 0;
-        const cPkm     = tD > 0 ? (tP + tF + tM) / tD : 0;
-        const pPkm     = tD > 0 ? tN / tD : 0;
-        const margin   = tG > 0 ? (tN / tG) * 100 : 0;
-        const mRate    = parseFloat(elMaintRateInput.value) || 0;
-
-        animateProfit(tN);
-        document.getElementById('summaryTrips').textContent    = ledgerTrips.length;
-        document.getElementById('summaryDistance').textContent = tD.toFixed(0) + ' km';
-        document.getElementById('summaryHours').textContent    = tH.toFixed(1) + 'h';
-        document.getElementById('summaryHourly').textContent   = fmt(Math.round(hourly));
-        document.getElementById('bdGross').textContent         = fmt(tG);
-        document.getElementById('bdPlatform').textContent      = '− ' + fmt(tP);
-        document.getElementById('bdPlatformPct').textContent   = 'Avg ' + avgPPct.toFixed(1) + '%';
-        document.getElementById('bdFuel').textContent          = '− ' + fmt(tF);
-        document.getElementById('bdLiters').textContent        = tL.toFixed(1) + ' L';
-        document.getElementById('bdMaint').textContent         = '− ' + fmt(tM);
-        document.getElementById('bdMaintPerKm').textContent    = mRate > 0 ? `₦${mRate}/km` : '₦0/km';
-        document.getElementById('bdNet').textContent           = fmt(tN);
-        document.getElementById('bdHourly').textContent        = fmt(Math.round(hourly)) + '/hr';
-        document.getElementById('bdRevPerKm').textContent      = fmt(rPkm);
-        document.getElementById('bdCostPerKm').textContent     = fmt(cPkm);
-        document.getElementById('bdProfitPerKm').textContent   = fmt(pPkm);
-        document.getElementById('bdMargin').textContent        = margin.toFixed(1) + '%';
-
-        const pf = tG > 0 ? Math.min((tP/tG)*100, 100) : 0;
-        const ff = tG > 0 ? Math.min((tF/tG)*100, 100) : 0;
-        const mf = tG > 0 ? Math.min((tM/tG)*100, 100) : 0;
-        document.getElementById('barPlatform').style.width = pf + '%';
-        document.getElementById('barFuel').style.width     = ff + '%';
-        document.getElementById('barMaint').style.width    = mf + '%';
-    }
-
-    // ── Sheet ──
-    function toggleSheet() {
-        isSheetOpen = !isSheetOpen;
-        document.getElementById('bottomSheet').classList.toggle('open', isSheetOpen);
-        document.getElementById('backdrop').classList.toggle('show', isSheetOpen);
-    }
-
-    // Boot
-    updateCurrentTripPreview();
-    calcDailyTotals();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
