@@ -8,6 +8,21 @@
     <meta name="theme-color" id="metaThemeColor" content="#030d05">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+
+    <!-- Open Graph / Link Preview -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="DriverProfit Calculator">
+    <meta property="og:description" content="Track your daily rideshare profit — Bolt, Uber, InDrive">
+    <meta property="og:image" content="https://driver-profit-five.vercel.app/icon-512.png">
+    <meta property="og:url" content="https://driver-profit-five.vercel.app">
+    <meta property="og:site_name" content="DriverProfit">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="DriverProfit Calculator">
+    <meta name="twitter:description" content="Track your daily rideshare profit — Bolt, Uber, InDrive">
+    <meta name="twitter:image" content="https://driver-profit-five.vercel.app/icon-512.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 
@@ -556,6 +571,7 @@
 </div><!-- /app -->
 
 <script src="app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" async></script>
 <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js');

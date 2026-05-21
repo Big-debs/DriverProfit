@@ -448,6 +448,7 @@ function addTrip() {
     const btn = document.getElementById('addTripBtn');
     btn.classList.add('btn-flash');
     setTimeout(() => btn.classList.remove('btn-flash'), 380);
+    window.va?.('event', { name: 'Add Trip', data: { platform: currentPlatform } });
 }
 
 function deleteTrip(id) {
@@ -630,8 +631,12 @@ function calcDailyTotals() {
 }
 
 // ── WhatsApp share ──
-function shareToWhatsApp() {
+async function shareToWhatsApp() {
     if (!ledgerTrips.length) return;
+
+    const siteUrl = window.location.origin;
+
+    // Build text summary for fallback / caption
     let totalGross = 0, totalDist = 0, totalHours = 0;
     let totalPlatform = 0, totalFuel = 0, totalMaint = 0, totalNet = 0;
     ledgerTrips.forEach(t => {
@@ -659,9 +664,52 @@ function shareToWhatsApp() {
     if (fixedTotal > 0) msg += `Fixed Costs:       −${n(fixedTotal)}\n`;
     msg += `\n*Take-Home: ${trueNet < 0 ? '−' : ''}${n(trueNet)}*`;
     if (totalHours > 0) msg += `\nHourly rate: ${n(Math.abs(trueNet / totalHours))}/hr`;
-    msg += `\n\n_Tracked with DriverProfit_`;
+    msg += `\n\n_Tracked with DriverProfit — ${siteUrl}_`;
+
+    // Try screenshot + Web Share API (works on mobile)
+    if (typeof html2canvas !== 'undefined') {
+        try {
+            const sheet     = document.getElementById('bottomSheet');
+            const sheetBody = sheet.querySelector('.sheet-body');
+
+            // Temporarily unclip to capture full scrollable content
+            const prevSheetH  = sheet.style.height;
+            const prevOverflow = sheetBody.style.overflow;
+            const prevFlex    = sheetBody.style.flex;
+            const prevHeight  = sheetBody.style.height;
+            sheet.style.height    = 'auto';
+            sheetBody.style.flex  = 'none';
+            sheetBody.style.height   = 'auto';
+            sheetBody.style.overflow = 'visible';
+
+            const canvas = await html2canvas(sheetBody, {
+                backgroundColor: '#14271a',
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+
+            // Restore styles
+            sheet.style.height       = prevSheetH;
+            sheetBody.style.flex     = prevFlex;
+            sheetBody.style.height   = prevHeight;
+            sheetBody.style.overflow = prevOverflow;
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const file = new File([blob], 'driverprofit-summary.png', { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], text: `Tracked with DriverProfit\n${siteUrl}` });
+                window.va?.('event', { name: 'Share to WhatsApp', data: { method: 'image', trips: ledgerTrips.length } });
+                return;
+            }
+        } catch (e) {
+            // Fall through to text share
+        }
+    }
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    window.va?.('event', { name: 'Share to WhatsApp', data: { method: 'text', trips: ledgerTrips.length } });
 }
 
 // ── Theme ──
