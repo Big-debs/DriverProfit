@@ -712,6 +712,14 @@ async function shareToWhatsApp() {
     window.va?.('event', { name: 'Share to WhatsApp', data: { method: 'text', trips: ledgerTrips.length } });
 }
 
+// ── Tab navigation ──
+function showTab(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+}
+
 // ── Theme ──
 function toggleTheme() {
     const isLight = document.documentElement.classList.toggle('light');

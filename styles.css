@@ -107,7 +107,8 @@ body {
     background: var(--surface-deep);
     color: var(--text-body);
     -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
 }
 .mono { font-family: 'Fira Code', monospace; }
 
@@ -121,7 +122,7 @@ body::before {
 /* ═══════ SHELL ═══════ */
 .app {
     max-width: 440px; margin: 0 auto;
-    min-height: 100vh; background: var(--surface-deep);
+    height: 100dvh; background: var(--surface-deep);
     position: relative; overflow: hidden;
     display: flex; flex-direction: column;
 }
@@ -179,7 +180,7 @@ body::before {
 .summary-div { width: 1px; height: 16px; background: var(--border); }
 
 .btn-sheet {
-    margin-top: 12px; width: 100%; padding: 10px 0;
+    width: 100%; padding: 10px 0; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; gap: 8px;
     font-size: 11px; font-weight: 700; color: var(--gold);
     background: var(--surface-raised);
@@ -189,13 +190,45 @@ body::before {
 .btn-sheet svg { width: 14px; height: 14px; }
 .btn-sheet:hover { background: var(--border); border-color: rgba(229,193,88,.3); }
 
-/* ═══════ SCROLL BODY ═══════ */
-.body-scroll {
-    padding: 16px; display: flex; flex-direction: column; gap: 14px;
-    padding-bottom: 120px; overflow-y: auto; flex: 1;
+/* ═══════ SCREEN CONTAINER ═══════ */
+.screen-container { flex: 1; overflow: hidden; position: relative; }
+.screen { display: none; height: 100%; overflow-y: auto; padding: 14px 16px 32px; flex-direction: column; gap: 14px; }
+.screen.active { display: flex; }
+.screen::-webkit-scrollbar { width: 3px; }
+.screen::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ═══════ TAB BAR ═══════ */
+.tab-bar {
+    display: flex; align-items: stretch; flex-shrink: 0;
+    background: var(--surface-card); border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 10;
 }
-.body-scroll::-webkit-scrollbar { width: 3px; }
-.body-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.tab-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; padding: 10px 4px 12px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 10px; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase;
+    transition: color .15s; position: relative;
+}
+.tab-btn svg { width: 20px; height: 20px; }
+.tab-btn.active { color: var(--gold); }
+.tab-btn::after {
+    content: ''; position: absolute; top: 0; left: 22%; right: 22%;
+    height: 2px; background: var(--gold); border-radius: 0 0 3px 3px;
+    opacity: 0; transition: opacity .15s;
+}
+.tab-btn.active::after { opacity: 1; }
+html.light .tab-btn.active { color: var(--gold-dim); }
+html.light .tab-btn.active::after { background: var(--gold-dim); }
+
+/* ═══════ LINK BUTTON ═══════ */
+.link-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--gold); font: inherit; font-weight: 700;
+    text-decoration: underline; padding: 0;
+}
+html.light .link-btn { color: var(--gold-dim); }
 
 /* ═══════ CARDS ═══════ */
 .card {

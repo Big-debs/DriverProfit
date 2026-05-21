@@ -92,379 +92,417 @@
         <div id="breakEvenBanner" class="breakeven-banner" style="display:none">
             <span id="breakEvenText"></span>
         </div>
-
-        <button class="btn-sheet" onclick="toggleSheet()">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <span>View Daily Statement</span>
-            <svg style="width:12px;height:12px;opacity:.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-            </svg>
-        </button>
     </div>
 
     <!-- ══════════════════════════════════
-         SCROLLABLE BODY
+         SCREEN CONTAINER
     ══════════════════════════════════ -->
-    <div class="body-scroll">
+    <div class="screen-container">
 
-        <!-- ── Card 1: Settings ── -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="section-label">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Pricing &amp; Vehicle
-                </h2>
-                <span class="section-note">Applied per trip</span>
-            </div>
+        <!-- ── Screen: Log ── -->
+        <div id="screen-log" class="screen active">
 
-            <div class="card-body">
-
-                <!-- Fuel Type -->
-                <div>
-                    <div class="slider-row">
-                        <span class="s-lbl">Fuel Type</span>
-                    </div>
-                    <div class="platform-tabs">
-                        <button id="ftPetrol"   class="platform-tab active" onclick="setFuelType('petrol')">Petrol</button>
-                        <button id="ftDiesel"   class="platform-tab"        onclick="setFuelType('diesel')">Diesel</button>
-                        <button id="ftCNG"      class="platform-tab"        onclick="setFuelType('cng')">CNG</button>
-                        <button id="ftElectric" class="platform-tab"        onclick="setFuelType('electric')">Electric</button>
-                    </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                        Trip Calculator
+                    </h2>
                 </div>
 
-                <!-- Platform -->
-                <div>
-                    <div class="slider-row">
-                        <span class="s-lbl">Platform Commission</span>
-                        <span id="sliderValDisplay" class="s-val">25.0%</span>
-                    </div>
-                    <div class="platform-tabs">
-                        <button id="btnBolt"    class="platform-tab active" onclick="setPlatform(25,'btnBolt')">Bolt</button>
-                        <button id="btnUber"    class="platform-tab"        onclick="setPlatform(20,'btnUber')">Uber</button>
-                        <button id="btnInDrive" class="platform-tab"        onclick="setPlatform(10,'btnInDrive')">InDrive</button>
-                        <button id="btnZero"    class="platform-tab"        onclick="setPlatform(0,'btnZero')">None</button>
-                    </div>
-                    <div style="padding:0 4px">
-                        <input type="range" id="platformSlider" min="0" max="100" step="0.5" value="25"
-                               style="--pct:25%" oninput="handleSliderInput(this.value)">
-                        <div class="slider-ticks">
-                            <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Fuel + Vehicle -->
-                <div class="grid-2">
+                <div class="card-body">
                     <div>
-                        <label id="fuelPriceLabel" class="field-label">Fuel Price (₦/L)</label>
-                        <div class="input-wrap has-prefix">
-                            <span class="input-prefix" style="color:var(--red)">₦</span>
-                            <input type="number" id="fuelPrice" inputmode="decimal" value="850"
+                        <label class="field-label">Gross Earnings (₦)</label>
+                        <div class="input-wrap gross-wrap">
+                            <span class="input-prefix">₦</span>
+                            <input type="number" id="tripGross" inputmode="decimal" placeholder="e.g. 12000"
                                    oninput="updateCurrentTripPreview()">
                         </div>
                     </div>
-                    <div>
-                        <label class="field-label">Vehicle</label>
-                        <select id="efficiency" onchange="handlePresetSelect(this.value)">
-                            <!-- Populated by setFuelType() -->
-                        </select>
-                    </div>
-                </div>
 
-                <!-- Efficiency fine-tune -->
-                <div class="inset-block inset-row">
-                    <div>
-                        <p id="efficiencyTitle" class="inset-title">Fuel Efficiency</p>
-                        <p id="efficiencySub" class="inset-sub">Fine-tune km per litre</p>
+                    <div class="grid-2">
+                        <div>
+                            <label class="field-label">Distance (km)</label>
+                            <input type="number" id="tripDistance" inputmode="decimal" placeholder="e.g. 24"
+                                   oninput="updateCurrentTripPreview()">
+                        </div>
+                        <div>
+                            <label class="field-label">Duration (hrs)</label>
+                            <input type="number" id="tripHours" inputmode="decimal" placeholder="e.g. 1.5"
+                                   oninput="updateCurrentTripPreview()">
+                        </div>
                     </div>
-                    <div class="stepper">
-                        <button type="button" class="stepper-btn" onclick="adjustEfficiency(-0.5)">−</button>
-                        <input type="number" id="manualEfficiency" inputmode="decimal" step="0.1" value="11.0"
-                               style="width:52px;text-align:center;padding:6px;font-size:12px"
-                               oninput="handleManualEfficiencyInput(this.value)">
-                        <button type="button" class="stepper-btn" onclick="adjustEfficiency(0.5)">+</button>
-                    </div>
-                </div>
 
-                <!-- Engine Size Helper -->
-                <div id="engineSizeBlock" class="inset-block inset-row">
-                    <div class="inset-label-wrap">
-                        <svg class="inset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                             style="color:var(--gold);opacity:.7">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+                    <!-- Preview -->
+                    <div class="preview-box">
+                        <div class="preview-grid">
+                            <div class="preview-cell">
+                                <span class="p-lbl">Platform Fee</span>
+                                <span id="previewPlatform" class="p-val" style="color:var(--red)">₦0</span>
+                            </div>
+                            <div class="preview-cell">
+                                <span id="previewFuelLabel" class="p-lbl">Fuel Cost</span>
+                                <span id="previewFuel" class="p-val" style="color:var(--amber)">₦0</span>
+                            </div>
+                            <div class="preview-cell last">
+                                <span class="p-lbl">Maintenance</span>
+                                <span id="previewMaint" class="p-val" style="color:var(--purple)">₦0</span>
+                            </div>
+                            <div class="preview-cell last" style="border-left:1px solid var(--border)">
+                                <span class="p-lbl">Trip Net</span>
+                                <span id="previewNet" class="p-val" style="color:var(--green)">₦0</span>
+                            </div>
+                        </div>
+                        <div class="economics-strip">
+                            <div class="eco-cell">
+                                <span class="e-lbl">Rev/km</span>
+                                <span id="previewRevPerKm" class="e-val" style="color:#d1d5db">₦0</span>
+                            </div>
+                            <div class="eco-cell">
+                                <span class="e-lbl">Cost/km</span>
+                                <span id="previewCostPerKm" class="e-val" style="color:var(--red)">₦0</span>
+                            </div>
+                            <div class="eco-cell">
+                                <span class="e-lbl">Profit/km</span>
+                                <span id="previewProfitPerKm" class="e-val" style="color:var(--green)">₦0</span>
+                            </div>
+                            <div class="eco-cell">
+                                <span class="e-lbl">Margin</span>
+                                <span id="previewMargin" class="e-val" style="color:var(--green)">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="addTripBtn" class="btn-gold" onclick="addTrip()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                         </svg>
-                        <div>
-                            <p class="inset-title">Engine Size</p>
-                            <p class="inset-sub">Auto-sets typical efficiency</p>
-                        </div>
-                    </div>
-                    <select id="engineSize" onchange="handleEngineSizeSelect(this.value)"
-                        <option value="">Pick size</option>
-                        <option value="0.8">0.8L  (800cc)</option>
-                        <option value="1.0">1.0L  (1000cc)</option>
-                        <option value="1.2">1.2L  (1200cc)</option>
-                        <option value="1.4">1.4L  (1400cc)</option>
-                        <option value="1.5">1.5L  (1500cc)</option>
-                        <option value="1.6">1.6L  (1600cc)</option>
-                        <option value="1.8">1.8L  (1800cc)</option>
-                        <option value="2.0">2.0L  (2000cc)</option>
-                        <option value="2.4">2.4L  (2400cc)</option>
-                        <option value="2.5">2.5L  (2500cc)</option>
-                        <option value="3.0">3.0L  (3000cc)</option>
-                        <option value="4.0">4.0L+ (4000cc+)</option>
-                    </select>
+                        Add Trip to Ledger
+                    </button>
                 </div>
+            </div><!-- /trip calc -->
 
-                <!-- AC Toggle -->
-                <div class="inset-block">
-                    <div class="inset-row">
-                        <div class="inset-label-wrap">
-                            <svg id="acIcon" class="inset-icon" fill="none" stroke="currentColor"
-                                 viewBox="0 0 24 24" style="color:rgba(96,165,250,.5)">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 3v18M3 12h18M5.636 5.636l12.728 12.728M18.364 5.636L5.636 18.364"/>
-                            </svg>
-                            <div>
-                                <p class="inset-title">Air Conditioning</p>
-                                <p id="acStatusText" class="inset-sub">Off — no impact</p>
-                            </div>
-                        </div>
-                        <div id="acToggle" class="ac-toggle" onclick="toggleAC()"></div>
-                    </div>
-                    <div id="acPenaltyRow" class="ac-penalty-row">
-                        <div>
-                            <p style="font-size:10px;font-weight:700;color:var(--blue);line-height:1">Efficiency Penalty</p>
-                            <p id="acPenaltySub" class="inset-sub">% drop in km/L with AC on</p>
-                        </div>
-                        <div class="stepper">
-                            <button type="button" class="stepper-btn" onclick="adjustAcPenalty(-1)">−</button>
-                            <span id="acPenaltyDisplay" class="stepper-val" style="color:var(--blue)">15%</span>
-                            <button type="button" class="stepper-btn" onclick="adjustAcPenalty(1)">+</button>
-                        </div>
+        </div><!-- /screen-log -->
+
+        <!-- ── Screen: Ledger ── -->
+        <div id="screen-ledger" class="screen">
+
+            <button class="btn-sheet" onclick="toggleSheet()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>View Daily Statement</span>
+                <svg style="width:12px;height:12px;opacity:.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="card">
+                <div class="ledger-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Day's Ledger
+                    </h2>
+                    <button class="btn-ghost-red" onclick="clearLedger()">Clear Day</button>
+                </div>
+                <div class="trip-list" id="tripsList">
+                    <div id="noTripsMessage" class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                        <p>No trips yet.<br><button class="link-btn" onclick="showTab('log')">Log your first trip</button></p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Maintenance -->
-                <div class="inset-block">
-                    <div class="inset-row">
-                        <div class="inset-label-wrap">
-                            <svg class="inset-icon" fill="none" stroke="currentColor"
-                                 viewBox="0 0 24 24" style="color:var(--purple);opacity:.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                            <div>
-                                <p class="inset-title">Maintenance &amp; Wear</p>
-                                <p class="inset-sub">Tyres, oil, servicing — per km</p>
+        </div><!-- /screen-ledger -->
+
+        <!-- ── Screen: Settings ── -->
+        <div id="screen-settings" class="screen">
+
+            <!-- Pricing & Vehicle -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Pricing &amp; Vehicle
+                    </h2>
+                    <span class="section-note">Applied per trip</span>
+                </div>
+
+                <div class="card-body">
+
+                    <!-- Fuel Type -->
+                    <div>
+                        <div class="slider-row">
+                            <span class="s-lbl">Fuel Type</span>
+                        </div>
+                        <div class="platform-tabs">
+                            <button id="ftPetrol"   class="platform-tab active" onclick="setFuelType('petrol')">Petrol</button>
+                            <button id="ftDiesel"   class="platform-tab"        onclick="setFuelType('diesel')">Diesel</button>
+                            <button id="ftCNG"      class="platform-tab"        onclick="setFuelType('cng')">CNG</button>
+                            <button id="ftElectric" class="platform-tab"        onclick="setFuelType('electric')">Electric</button>
+                        </div>
+                    </div>
+
+                    <!-- Platform -->
+                    <div>
+                        <div class="slider-row">
+                            <span class="s-lbl">Platform Commission</span>
+                            <span id="sliderValDisplay" class="s-val">25.0%</span>
+                        </div>
+                        <div class="platform-tabs">
+                            <button id="btnBolt"    class="platform-tab active" onclick="setPlatform(25,'btnBolt')">Bolt</button>
+                            <button id="btnUber"    class="platform-tab"        onclick="setPlatform(20,'btnUber')">Uber</button>
+                            <button id="btnInDrive" class="platform-tab"        onclick="setPlatform(10,'btnInDrive')">InDrive</button>
+                            <button id="btnZero"    class="platform-tab"        onclick="setPlatform(0,'btnZero')">None</button>
+                        </div>
+                        <div style="padding:0 4px">
+                            <input type="range" id="platformSlider" min="0" max="100" step="0.5" value="25"
+                                   style="--pct:25%" oninput="handleSliderInput(this.value)">
+                            <div class="slider-ticks">
+                                <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
                             </div>
                         </div>
-                        <div class="stepper">
-                            <button type="button" class="stepper-btn" onclick="adjustMaintRate(-5)">−</button>
-                            <div class="input-wrap has-prefix" style="width:64px">
-                                <span class="input-prefix" style="font-size:11px;padding-left:6px;color:var(--purple)">₦</span>
-                                <input type="number" id="maintRateInput" inputmode="decimal" value="20"
-                                       style="padding-left:22px;width:64px;font-size:11px;padding-top:6px;padding-bottom:6px"
+                    </div>
+
+                    <!-- Fuel + Vehicle -->
+                    <div class="grid-2">
+                        <div>
+                            <label id="fuelPriceLabel" class="field-label">Fuel Price (₦/L)</label>
+                            <div class="input-wrap has-prefix">
+                                <span class="input-prefix" style="color:var(--red)">₦</span>
+                                <input type="number" id="fuelPrice" inputmode="decimal" value="850"
                                        oninput="updateCurrentTripPreview()">
                             </div>
-                            <button type="button" class="stepper-btn" onclick="adjustMaintRate(5)">+</button>
+                        </div>
+                        <div>
+                            <label class="field-label">Vehicle</label>
+                            <select id="efficiency" onchange="handlePresetSelect(this.value)">
+                                <!-- Populated by setFuelType() -->
+                            </select>
                         </div>
                     </div>
-                    <p id="maintEstimate">Set distance on trip to see estimate</p>
+
+                    <!-- Efficiency fine-tune -->
+                    <div class="inset-block inset-row">
+                        <div>
+                            <p id="efficiencyTitle" class="inset-title">Fuel Efficiency</p>
+                            <p id="efficiencySub" class="inset-sub">Fine-tune km per litre</p>
+                        </div>
+                        <div class="stepper">
+                            <button type="button" class="stepper-btn" onclick="adjustEfficiency(-0.5)">−</button>
+                            <input type="number" id="manualEfficiency" inputmode="decimal" step="0.1" value="11.0"
+                                   style="width:52px;text-align:center;padding:6px;font-size:12px"
+                                   oninput="handleManualEfficiencyInput(this.value)">
+                            <button type="button" class="stepper-btn" onclick="adjustEfficiency(0.5)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Engine Size Helper -->
+                    <div id="engineSizeBlock" class="inset-block inset-row">
+                        <div class="inset-label-wrap">
+                            <svg class="inset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                 style="color:var(--gold);opacity:.7">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+                            </svg>
+                            <div>
+                                <p class="inset-title">Engine Size</p>
+                                <p class="inset-sub">Auto-sets typical efficiency</p>
+                            </div>
+                        </div>
+                        <select id="engineSize" onchange="handleEngineSizeSelect(this.value)">
+                            <option value="">Pick size</option>
+                            <option value="0.8">0.8L  (800cc)</option>
+                            <option value="1.0">1.0L  (1000cc)</option>
+                            <option value="1.2">1.2L  (1200cc)</option>
+                            <option value="1.4">1.4L  (1400cc)</option>
+                            <option value="1.5">1.5L  (1500cc)</option>
+                            <option value="1.6">1.6L  (1600cc)</option>
+                            <option value="1.8">1.8L  (1800cc)</option>
+                            <option value="2.0">2.0L  (2000cc)</option>
+                            <option value="2.4">2.4L  (2400cc)</option>
+                            <option value="2.5">2.5L  (2500cc)</option>
+                            <option value="3.0">3.0L  (3000cc)</option>
+                            <option value="4.0">4.0L+ (4000cc+)</option>
+                        </select>
+                    </div>
+
+                    <!-- AC Toggle -->
+                    <div class="inset-block">
+                        <div class="inset-row">
+                            <div class="inset-label-wrap">
+                                <svg id="acIcon" class="inset-icon" fill="none" stroke="currentColor"
+                                     viewBox="0 0 24 24" style="color:rgba(96,165,250,.5)">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 3v18M3 12h18M5.636 5.636l12.728 12.728M18.364 5.636L5.636 18.364"/>
+                                </svg>
+                                <div>
+                                    <p class="inset-title">Air Conditioning</p>
+                                    <p id="acStatusText" class="inset-sub">Off — no impact</p>
+                                </div>
+                            </div>
+                            <div id="acToggle" class="ac-toggle" onclick="toggleAC()"></div>
+                        </div>
+                        <div id="acPenaltyRow" class="ac-penalty-row">
+                            <div>
+                                <p style="font-size:10px;font-weight:700;color:var(--blue);line-height:1">Efficiency Penalty</p>
+                                <p id="acPenaltySub" class="inset-sub">% drop in km/L with AC on</p>
+                            </div>
+                            <div class="stepper">
+                                <button type="button" class="stepper-btn" onclick="adjustAcPenalty(-1)">−</button>
+                                <span id="acPenaltyDisplay" class="stepper-val" style="color:var(--blue)">15%</span>
+                                <button type="button" class="stepper-btn" onclick="adjustAcPenalty(1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Maintenance -->
+                    <div class="inset-block">
+                        <div class="inset-row">
+                            <div class="inset-label-wrap">
+                                <svg class="inset-icon" fill="none" stroke="currentColor"
+                                     viewBox="0 0 24 24" style="color:var(--purple);opacity:.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                <div>
+                                    <p class="inset-title">Maintenance &amp; Wear</p>
+                                    <p class="inset-sub">Tyres, oil, servicing — per km</p>
+                                </div>
+                            </div>
+                            <div class="stepper">
+                                <button type="button" class="stepper-btn" onclick="adjustMaintRate(-5)">−</button>
+                                <div class="input-wrap has-prefix" style="width:64px">
+                                    <span class="input-prefix" style="font-size:11px;padding-left:6px;color:var(--purple)">₦</span>
+                                    <input type="number" id="maintRateInput" inputmode="decimal" value="20"
+                                           style="padding-left:22px;width:64px;font-size:11px;padding-top:6px;padding-bottom:6px"
+                                           oninput="updateCurrentTripPreview()">
+                                </div>
+                                <button type="button" class="stepper-btn" onclick="adjustMaintRate(5)">+</button>
+                            </div>
+                        </div>
+                        <p id="maintEstimate">Set distance on trip to see estimate</p>
+                    </div>
+
                 </div>
+            </div><!-- /settings -->
 
-            </div>
-        </div><!-- /settings -->
-
-        <!-- ── Card: Fixed Daily Costs ── -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="section-label">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                    </svg>
-                    Fixed Daily Costs
-                </h2>
-                <span class="section-note">Paid before first trip</span>
-            </div>
-            <div class="card-body">
-                <div class="fc-list">
-                    <div class="fc-row">
-                        <span class="fc-label">Car Loan / Hire Purchase</span>
-                        <div class="input-wrap has-prefix fc-input-wrap">
-                            <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
-                            <input type="number" id="fcLoan" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
+            <!-- Fixed Daily Costs -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        Fixed Daily Costs
+                    </h2>
+                    <span class="section-note">Paid before first trip</span>
+                </div>
+                <div class="card-body">
+                    <div class="fc-list">
+                        <div class="fc-row">
+                            <span class="fc-label">Car Loan / Hire Purchase</span>
+                            <div class="input-wrap has-prefix fc-input-wrap">
+                                <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
+                                <input type="number" id="fcLoan" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
+                            </div>
+                        </div>
+                        <div class="fc-row">
+                            <span class="fc-label">Data Subscription</span>
+                            <div class="input-wrap has-prefix fc-input-wrap">
+                                <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
+                                <input type="number" id="fcData" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
+                            </div>
+                        </div>
+                        <div class="fc-row">
+                            <span class="fc-label">Parking / Toll</span>
+                            <div class="input-wrap has-prefix fc-input-wrap">
+                                <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
+                                <input type="number" id="fcParking" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
+                            </div>
+                        </div>
+                        <div class="fc-row">
+                            <span class="fc-label">Car Wash</span>
+                            <div class="input-wrap has-prefix fc-input-wrap">
+                                <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
+                                <input type="number" id="fcWash" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
+                            </div>
                         </div>
                     </div>
-                    <div class="fc-row">
-                        <span class="fc-label">Data Subscription</span>
-                        <div class="input-wrap has-prefix fc-input-wrap">
-                            <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
-                            <input type="number" id="fcData" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
-                        </div>
-                    </div>
-                    <div class="fc-row">
-                        <span class="fc-label">Parking / Toll</span>
-                        <div class="input-wrap has-prefix fc-input-wrap">
-                            <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
-                            <input type="number" id="fcParking" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
-                        </div>
-                    </div>
-                    <div class="fc-row">
-                        <span class="fc-label">Car Wash</span>
-                        <div class="input-wrap has-prefix fc-input-wrap">
-                            <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
-                            <input type="number" id="fcWash" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
-                        </div>
+                    <div class="fc-total-row">
+                        <span class="fc-total-label">Total fixed today</span>
+                        <span id="fcTotal" class="fc-total-val">₦0</span>
                     </div>
                 </div>
-                <div class="fc-total-row">
-                    <span class="fc-total-label">Total fixed today</span>
-                    <span id="fcTotal" class="fc-total-val">₦0</span>
+            </div><!-- /fixed costs -->
+
+            <!-- Feedback Footer -->
+            <div class="feedback-footer">
+                <p class="feedback-label">Have feedback?</p>
+                <div class="feedback-btns">
+                    <a class="feedback-btn feedback-btn-email"
+                       href="mailto:olaoluwaolaniyan@gmail.com?subject=DriverProfit%20Feedback"
+                       target="_blank" rel="noopener" aria-label="Email feedback">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2"/>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                        </svg>
+                        Email
+                    </a>
+                    <a class="feedback-btn feedback-btn-wa"
+                       href="https://wa.me/2347033272341?text=Feedback%20on%20DriverProfit%3A%20"
+                       target="_blank" rel="noopener" aria-label="WhatsApp feedback">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                        WhatsApp
+                    </a>
                 </div>
             </div>
-        </div><!-- /fixed costs -->
 
-        <!-- ── Card 2: Trip Calculator ── -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="section-label">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                    </svg>
-                    Trip Calculator
-                </h2>
-            </div>
+        </div><!-- /screen-settings -->
 
-            <div class="card-body">
-                <div>
-                    <label class="field-label">Gross Earnings (₦)</label>
-                    <div class="input-wrap gross-wrap">
-                        <span class="input-prefix">₦</span>
-                        <input type="number" id="tripGross" inputmode="decimal" placeholder="e.g. 12000"
-                               oninput="updateCurrentTripPreview()">
-                    </div>
-                </div>
+    </div><!-- /screen-container -->
 
-                <div class="grid-2">
-                    <div>
-                        <label class="field-label">Distance (km)</label>
-                        <input type="number" id="tripDistance" inputmode="decimal" placeholder="e.g. 24"
-                               oninput="updateCurrentTripPreview()">
-                    </div>
-                    <div>
-                        <label class="field-label">Duration (hrs)</label>
-                        <input type="number" id="tripHours" inputmode="decimal" placeholder="e.g. 1.5"
-                               oninput="updateCurrentTripPreview()">
-                    </div>
-                </div>
-
-                <!-- Preview -->
-                <div class="preview-box">
-                    <div class="preview-grid">
-                        <div class="preview-cell">
-                            <span class="p-lbl">Platform Fee</span>
-                            <span id="previewPlatform" class="p-val" style="color:var(--red)">₦0</span>
-                        </div>
-                        <div class="preview-cell">
-                            <span id="previewFuelLabel" class="p-lbl">Fuel Cost</span>
-                            <span id="previewFuel" class="p-val" style="color:var(--amber)">₦0</span>
-                        </div>
-                        <div class="preview-cell last">
-                            <span class="p-lbl">Maintenance</span>
-                            <span id="previewMaint" class="p-val" style="color:var(--purple)">₦0</span>
-                        </div>
-                        <div class="preview-cell last" style="border-left:1px solid var(--border)">
-                            <span class="p-lbl">Trip Net</span>
-                            <span id="previewNet" class="p-val" style="color:var(--green)">₦0</span>
-                        </div>
-                    </div>
-                    <div class="economics-strip">
-                        <div class="eco-cell">
-                            <span class="e-lbl">Rev/km</span>
-                            <span id="previewRevPerKm" class="e-val" style="color:#d1d5db">₦0</span>
-                        </div>
-                        <div class="eco-cell">
-                            <span class="e-lbl">Cost/km</span>
-                            <span id="previewCostPerKm" class="e-val" style="color:var(--red)">₦0</span>
-                        </div>
-                        <div class="eco-cell">
-                            <span class="e-lbl">Profit/km</span>
-                            <span id="previewProfitPerKm" class="e-val" style="color:var(--green)">₦0</span>
-                        </div>
-                        <div class="eco-cell">
-                            <span class="e-lbl">Margin</span>
-                            <span id="previewMargin" class="e-val" style="color:var(--green)">0%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="addTripBtn" class="btn-gold" onclick="addTrip()">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Add Trip to Ledger
-                </button>
-            </div>
-        </div><!-- /trip calc -->
-
-        <!-- ── Card 3: Ledger ── -->
-        <div class="card">
-            <div class="ledger-header">
-                <h2 class="section-label">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                    Day's Ledger
-                </h2>
-                <button class="btn-ghost-red" onclick="clearLedger()">Clear Day</button>
-            </div>
-            <div class="trip-list" id="tripsList">
-                <div id="noTripsMessage" class="empty-state">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                    </svg>
-                    <p>No trips yet.<br>Log your first trip above.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- FEEDBACK FOOTER -->
-        <div class="feedback-footer">
-            <p class="feedback-label">Have feedback?</p>
-            <div class="feedback-btns">
-                <a class="feedback-btn feedback-btn-email"
-                   href="mailto:olaoluwaolaniyan@gmail.com?subject=DriverProfit%20Feedback"
-                   target="_blank" rel="noopener" aria-label="Email feedback">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="4" width="20" height="16" rx="2"/>
-                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                    </svg>
-                    Email
-                </a>
-                <a class="feedback-btn feedback-btn-wa"
-                   href="https://wa.me/2347033272341?text=Feedback%20on%20DriverProfit%3A%20"
-                   target="_blank" rel="noopener" aria-label="WhatsApp feedback">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                    </svg>
-                    WhatsApp
-                </a>
-            </div>
-        </div>
-
-    </div><!-- /body-scroll -->
+    <!-- TAB BAR -->
+    <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="log" onclick="showTab('log')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+            <span>Log</span>
+        </button>
+        <button class="tab-btn" data-tab="ledger" onclick="showTab('ledger')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <span>Ledger</span>
+        </button>
+        <button class="tab-btn" data-tab="settings" onclick="showTab('settings')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+            </svg>
+            <span>Settings</span>
+        </button>
+    </nav>
 
     <!-- BACKDROP -->
     <div id="backdrop" class="backdrop" onclick="toggleSheet()"></div>
