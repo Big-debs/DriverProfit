@@ -714,11 +714,30 @@ async function shareToWhatsApp() {
 
 // ── Tab navigation ──
 function showTab(name) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('screen-' + name).classList.add('active');
-    document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+    const container = document.querySelector('.screen-container');
+    const screen = document.getElementById('screen-' + name);
+    container.scrollTo({ left: screen.offsetLeft, behavior: 'smooth' });
+    setActiveTab(name);
 }
+
+function setActiveTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+    if (btn) btn.classList.add('active');
+}
+
+// Sync tab indicator when user swipes between screens
+(function () {
+    const container = document.querySelector('.screen-container');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+                setActiveTab(entry.target.id.replace('screen-', ''));
+            }
+        });
+    }, { root: container, threshold: 0.5 });
+    document.querySelectorAll('.screen').forEach(s => observer.observe(s));
+})();
 
 // ── Theme ──
 function toggleTheme() {
