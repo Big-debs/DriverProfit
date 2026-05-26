@@ -261,17 +261,17 @@
                     <div>
                         <div class="slider-row">
                             <span class="s-lbl">Platform Commission</span>
-                            <span id="sliderValDisplay" class="s-val">25.0%</span>
+                            <span id="sliderValDisplay" class="s-val">20.0%</span>
                         </div>
                         <div class="platform-tabs">
-                            <button id="btnBolt"    class="platform-tab active" onclick="setPlatform(25,'btnBolt')">Bolt</button>
-                            <button id="btnUber"    class="platform-tab"        onclick="setPlatform(20,'btnUber')">Uber</button>
+                            <button id="btnBolt"    class="platform-tab active" onclick="setPlatform(20,'btnBolt')">Bolt</button>
+                            <button id="btnUber"    class="platform-tab"        onclick="setPlatform(25,'btnUber')">Uber</button>
                             <button id="btnInDrive" class="platform-tab"        onclick="setPlatform(7.5,'btnInDrive')">InDrive</button>
                             <button id="btnZero"    class="platform-tab"        onclick="setPlatform(0,'btnZero')">None</button>
                         </div>
                         <div style="padding:0 4px">
-                            <input type="range" id="platformSlider" min="0" max="100" step="0.5" value="25"
-                                   style="--pct:25%" oninput="handleSliderInput(this.value)">
+                            <input type="range" id="platformSlider" min="0" max="100" step="0.5" value="20"
+                                   style="--pct:20%" oninput="handleSliderInput(this.value)">
                             <div class="slider-ticks">
                                 <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
                             </div>
@@ -507,7 +507,7 @@
                             <div class="guide-num">2</div>
                             <div class="guide-text">
                                 <p class="guide-title">Platform Commission</p>
-                                <p class="guide-desc">Tap <b>Bolt</b> (25%), <b>Uber</b> (20%), or <b>InDrive</b> (10%) to load the preset rate, or drag the slider for a custom percentage.</p>
+                                <p class="guide-desc">Tap <b>Bolt</b> (20%), <b>Uber</b> (25%), or <b>InDrive</b> (7.5%) to load the preset rate, or drag the slider for a custom percentage.</p>
                             </div>
                         </div>
                         <div class="guide-step">
@@ -787,7 +787,7 @@
                             <p id="bdPlatform" class="stmt-val" style="color:var(--red)">− ₦0</p>
                             <div class="deduct-bar"><div id="barPlatform" class="deduct-fill" style="width:0%;background:var(--red)"></div></div>
                         </div>
-                        <span id="bdPlatformPct" class="stmt-badge" style="background:rgba(240,82,82,.1);color:var(--red)">Avg 25.0%</span>
+                        <span id="bdPlatformPct" class="stmt-badge" style="background:rgba(240,82,82,.1);color:var(--red)">Avg 20.0%</span>
                     </div>
                 </div>
 

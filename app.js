@@ -1,6 +1,6 @@
 // ── Constants ──
 const PLATFORM_BTN_IDS = ['btnBolt', 'btnUber', 'btnInDrive', 'btnZero'];
-const PLATFORM_PRESETS = { btnBolt: 25, btnUber: 20, btnInDrive: 10, btnZero: 0 };
+const PLATFORM_PRESETS = { btnBolt: 20, btnUber: 25, btnInDrive: 7.5, btnZero: 0 };
 const PLATFORM_NAMES   = { btnBolt: 'Bolt', btnUber: 'Uber', btnInDrive: 'InDrive', btnZero: 'None' };
 const DEFAULT_EFFICIENCY = 11;
 const STORAGE_KEY = 'driverprofit_ledger';
@@ -116,7 +116,7 @@ const ENGINE_SIZE_MAP = {
 };
 
 // ── State ──
-let platformFeePercentage = 25;
+let platformFeePercentage = 20;
 let currentPlatform       = 'Bolt';
 let isSheetOpen           = false;
 let ledgerTrips           = [];
