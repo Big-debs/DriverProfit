@@ -618,6 +618,70 @@ input[type="range"]:active::-webkit-slider-thumb {
 .btn-whatsapp svg { width: 16px; height: 16px; flex-shrink: 0; }
 .btn-whatsapp:hover { background: rgba(37,211,102,.18); border-color: rgba(37,211,102,.45); }
 
+/* ═══════ GUIDE SCREEN ═══════ */
+.guide-intro {
+    font-size: 11px; color: var(--text-muted); font-weight: 500; line-height: 1.55;
+}
+.guide-intro b { color: var(--text-secondary); font-weight: 700; }
+.guide-list { display: flex; flex-direction: column; }
+.guide-step {
+    display: flex; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid rgba(36,59,42,.5);
+}
+.guide-step:first-child { padding-top: 0; }
+.guide-step:last-child  { border-bottom: none; padding-bottom: 0; }
+.guide-num {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+    background: var(--gold-muted); border: 1px solid rgba(229,193,88,.3);
+    color: var(--gold); font-size: 10px; font-weight: 900;
+    font-family: 'Fira Code', monospace;
+    display: flex; align-items: center; justify-content: center;
+}
+.guide-title { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; line-height: 1.2; }
+.guide-desc  { font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+.guide-desc b { color: var(--text-secondary); font-weight: 700; }
+
+/* Install blocks */
+.install-blocks { display: flex; flex-direction: column; }
+.install-block  { padding: 12px 0; }
+.install-block:first-child { padding-top: 0; }
+.install-block:last-child  { padding-bottom: 0; }
+.install-divider { height: 1px; background: rgba(36,59,42,.5); }
+.install-os {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px;
+}
+.install-steps {
+    list-style: none; display: flex; flex-direction: column; gap: 5px; padding-left: 4px;
+}
+.install-steps li {
+    font-size: 11px; color: var(--text-muted); line-height: 1.5;
+    display: flex; gap: 8px; align-items: flex-start;
+}
+.install-steps li::before {
+    content: '›'; color: var(--gold); font-weight: 900; font-size: 14px;
+    flex-shrink: 0; line-height: 1.3;
+}
+.install-steps li b { color: var(--text-secondary); font-weight: 700; }
+.install-note {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 14px;
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(52,211,153,.06); border: 1px solid rgba(52,211,153,.15);
+    font-size: 10px; color: var(--green); line-height: 1.55;
+}
+.install-note svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* Light mode — guide */
+html.light .guide-step  { border-bottom-color: var(--border); }
+html.light .guide-title { color: var(--text-primary); }
+html.light .guide-desc  { color: var(--text-muted); }
+html.light .guide-desc b, html.light .guide-intro b { color: var(--text-secondary); }
+html.light .install-divider { background: var(--border); }
+html.light .install-steps li { color: var(--text-muted); }
+html.light .install-steps li b { color: var(--text-secondary); }
+html.light .install-note { background: rgba(52,211,153,.08); border-color: rgba(52,211,153,.2); }
+
 /* ═══════ FEEDBACK FOOTER ═══════ */
 .feedback-footer {
     display: flex; flex-direction: column; align-items: center;
