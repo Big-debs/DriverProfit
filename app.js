@@ -1,3 +1,34 @@
+// ── Analytics ──
+const ANALYTICS_QUEUE_KEY = 'dp_analytics_queue';
+const ANALYTICS_MAX_QUEUE = 50;
+
+function trackEvent(name, data) {
+    if (navigator.onLine && typeof window.va === 'function') {
+        window.va('event', { name, data });
+    } else {
+        try {
+            const queue = JSON.parse(localStorage.getItem(ANALYTICS_QUEUE_KEY) || '[]');
+            queue.push({ name, data });
+            if (queue.length > ANALYTICS_MAX_QUEUE) queue.splice(0, queue.length - ANALYTICS_MAX_QUEUE);
+            localStorage.setItem(ANALYTICS_QUEUE_KEY, JSON.stringify(queue));
+        } catch {}
+    }
+}
+
+function flushAnalyticsQueue() {
+    if (!navigator.onLine || typeof window.va !== 'function') return;
+    try {
+        const queue = JSON.parse(localStorage.getItem(ANALYTICS_QUEUE_KEY) || '[]');
+        if (!queue.length) return;
+        queue.forEach(({ name, data }) => window.va('event', { name, data }));
+        localStorage.removeItem(ANALYTICS_QUEUE_KEY);
+    } catch {}
+}
+
+// Flush when coming back online, and after page load (gives the deferred Vercel script time to init)
+window.addEventListener('online', flushAnalyticsQueue);
+window.addEventListener('load', () => setTimeout(flushAnalyticsQueue, 1500));
+
 // ── Constants ──
 const PLATFORM_BTN_IDS = ['btnBolt', 'btnUber', 'btnInDrive', 'btnZero'];
 const PLATFORM_PRESETS = { btnBolt: 20, btnUber: 25, btnInDrive: 7.5, btnZero: 0 };
@@ -448,7 +479,7 @@ function addTrip() {
     const btn = document.getElementById('addTripBtn');
     btn.classList.add('btn-flash');
     setTimeout(() => btn.classList.remove('btn-flash'), 380);
-    window.va?.('event', { name: 'Add Trip', data: { platform: currentPlatform } });
+    trackEvent('Add Trip', { platform: currentPlatform });
 }
 
 function deleteTrip(id) {
@@ -700,7 +731,7 @@ async function shareToWhatsApp() {
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({ files: [file], text: `Tracked with DriverProfit\n${siteUrl}` });
-                window.va?.('event', { name: 'Share to WhatsApp', data: { method: 'image', trips: ledgerTrips.length } });
+                trackEvent('Share to WhatsApp', { method: 'image', trips: ledgerTrips.length });
                 return;
             }
         } catch (e) {
@@ -709,7 +740,7 @@ async function shareToWhatsApp() {
     }
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    window.va?.('event', { name: 'Share to WhatsApp', data: { method: 'text', trips: ledgerTrips.length } });
+    trackEvent('Share to WhatsApp', { method: 'text', trips: ledgerTrips.length });
 }
 
 // ── Tab navigation ──
