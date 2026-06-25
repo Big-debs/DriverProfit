@@ -1,4 +1,4 @@
-const CACHE = 'driverprofit-v8';
+const CACHE = 'driverprofit-v13';
 const ASSETS = [
     '/',
     '/index.html',

@@ -368,6 +368,23 @@ input[type="range"]:active::-webkit-slider-thumb {
     border-color: rgba(96,165,250,.3);
 }
 
+.type-tabs {
+    display: flex; gap: 6px; overflow-x: auto; padding: 4px;
+    background: var(--surface-deep); border: 1px solid var(--border); border-radius: 12px;
+}
+.type-tabs::-webkit-scrollbar { display: none; }
+.type-tab {
+    flex: 0 0 auto; min-height: 30px; padding: 7px 10px;
+    border-radius: 8px; border: 1px solid transparent;
+    background: none; color: var(--text-muted); cursor: pointer;
+    font-size: 10px; font-weight: 800; line-height: 1.15;
+    transition: all .15s;
+}
+.type-tab.active {
+    background: var(--gold-muted); color: var(--gold);
+    border-color: rgba(229,193,88,.32);
+}
+
 .mode-extra {
     padding: 12px; border: 1px solid rgba(96,165,250,.18); border-radius: 12px;
     background: rgba(96,165,250,.06);
@@ -559,8 +576,11 @@ input[type="range"]:active::-webkit-slider-thumb {
 }
 .history-row {
     background: rgba(3,13,5,.55); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px;
+    border-radius: 12px; padding: 12px; cursor: pointer;
+    transition: border-color .15s, background .15s;
 }
+.history-row:hover { border-color: rgba(229,193,88,.3); background: rgba(28,50,34,.65); }
+.history-row:focus { outline: none; box-shadow: 0 0 0 1.5px var(--gold); }
 .history-main {
     display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
 }
@@ -577,6 +597,34 @@ input[type="range"]:active::-webkit-slider-thumb {
 .history-units b {
     display: block; margin-top: 2px; font-family: 'Fira Code', monospace;
     font-size: 10px; color: var(--text-secondary);
+}
+
+.history-detail-card { border-color: rgba(96,165,250,.22); }
+.history-detail-summary {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 12px;
+}
+.history-detail-summary div {
+    background: rgba(96,165,250,.06); border: 1px solid rgba(96,165,250,.16);
+    border-radius: 10px; padding: 8px 6px; text-align: center;
+}
+.history-detail-summary span {
+    display: block; font-size: 8px; font-weight: 800; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 3px;
+}
+.history-detail-summary b {
+    font-size: 10px; font-family: 'Fira Code', monospace; color: var(--text-primary);
+}
+.history-detail-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+}
+.history-detail-list { display: flex; flex-direction: column; gap: 8px; }
+.history-detail-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    padding: 10px; border: 1px solid var(--border); border-radius: 10px;
+    background: rgba(3,13,5,.45);
+}
+.history-detail-row > b {
+    flex-shrink: 0; font-size: 12px; font-family: 'Fira Code', monospace;
 }
 
 .insight-list {
@@ -737,11 +785,37 @@ input[type="range"]:active::-webkit-slider-thumb {
     cursor: pointer; transition: background .15s, border-color .15s;
 }
 .btn-data:hover { background: rgba(229,193,88,.14); border-color: rgba(229,193,88,.38); }
+.btn-data-muted {
+    color: var(--text-muted); background: rgba(107,114,128,.08); border-color: rgba(107,114,128,.22);
+}
 .data-status {
     min-height: 14px; font-size: 10px; line-height: 1.4; color: var(--text-muted);
 }
 .status-good { color: var(--green); }
 .status-bad { color: var(--red); }
+.import-preview {
+    padding: 12px; border: 1px solid rgba(96,165,250,.22); border-radius: 12px;
+    background: rgba(96,165,250,.06);
+}
+.import-title { font-size: 12px; font-weight: 800; color: var(--text-primary); }
+.import-copy { margin-top: 4px; font-size: 10px; color: var(--text-muted); line-height: 1.45; }
+.import-warning { margin-top: 8px; font-size: 10px; color: var(--amber); line-height: 1.45; }
+.import-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+
+.privacy-lead {
+    font-size: 12px; font-weight: 700; color: var(--text-primary); line-height: 1.45;
+}
+.privacy-list { display: flex; flex-direction: column; gap: 8px; }
+.privacy-row {
+    padding: 10px 12px; border: 1px solid rgba(52,211,153,.14); border-radius: 10px;
+    background: rgba(52,211,153,.05);
+}
+.privacy-row b {
+    display: block; font-size: 11px; color: var(--green); margin-bottom: 4px;
+}
+.privacy-row span {
+    display: block; font-size: 10px; color: var(--text-muted); line-height: 1.45;
+}
 
 /* ═══════ PLATFORM BADGES ═══════ */
 .badge-bolt    { background: rgba(52,211,153,.12);  color: #34d399;       border: 1px solid rgba(52,211,153,.25);  }

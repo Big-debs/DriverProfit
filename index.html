@@ -115,6 +115,13 @@
 
                 <div class="card-body">
                     <div>
+                        <div class="slider-row">
+                            <span id="tripTypeLabel" class="s-lbl">Trip Type</span>
+                        </div>
+                        <div id="tripTypeTabs" class="type-tabs"></div>
+                    </div>
+
+                    <div>
                         <label id="grossLabel" class="field-label">Gross Earnings (₦)</label>
                         <div class="input-wrap gross-wrap">
                             <span class="input-prefix">₦</span>
@@ -319,6 +326,19 @@
                         <p>No saved days yet.<br><button class="link-btn" onclick="showTab('log')">Log today's first trip</button></p>
                     </div>
                 </div>
+            </div>
+
+            <div id="historyDetailCard" class="card history-detail-card" style="display:none">
+                <div class="ledger-header">
+                    <h2 id="historyDetailTitle" class="section-label">Day Details</h2>
+                    <button class="btn-ghost-red" type="button" onclick="closeHistoryDetail()">Close</button>
+                </div>
+                <div id="historyDetailSummary" class="history-detail-summary"></div>
+                <div class="history-detail-actions">
+                    <button class="btn-data" type="button" onclick="exportSelectedHistoryDayCsv()">Export This Day</button>
+                    <button class="btn-data" type="button" onclick="shareSelectedHistoryDayWhatsApp()">Share This Day</button>
+                </div>
+                <div id="historyDetailList" class="history-detail-list"></div>
             </div>
 
         </div><!-- /screen-history -->
@@ -607,8 +627,50 @@
                     </div>
                     <input id="jsonImportInput" type="file" accept="application/json,.json" style="display:none" onchange="importJsonBackup(event)">
                     <p id="backupStatus" class="data-status"></p>
+                    <div id="importPreview" class="import-preview" style="display:none">
+                        <div id="importPreviewBody"></div>
+                        <div class="import-actions">
+                            <button class="btn-data" type="button" onclick="confirmImportBackup()">Restore Backup</button>
+                            <button class="btn-data btn-data-muted" type="button" onclick="cancelImportPreview()">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div><!-- /data backup -->
+
+            <!-- Privacy & Trust -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 11c1.657 0 3-1.343 3-3V6a3 3 0 00-6 0v2c0 1.657 1.343 3 3 3zm6 0H6a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2v-6a2 2 0 00-2-2z"/>
+                        </svg>
+                        Privacy &amp; Trust
+                    </h2>
+                    <span class="section-note">Your records</span>
+                </div>
+                <div class="card-body">
+                    <p class="privacy-lead">DriverProfit helps you understand your own numbers. Your records belong to you.</p>
+                    <div class="privacy-list">
+                        <div class="privacy-row">
+                            <b>Stored locally</b>
+                            <span>Trips, costs, history, and insights stay on this phone unless you export them.</span>
+                        </div>
+                        <div class="privacy-row">
+                            <b>Backups are yours</b>
+                            <span>CSV and JSON exports are files you control. Keep JSON backups safe if you change phones.</span>
+                        </div>
+                        <div class="privacy-row">
+                            <b>Future account sync</b>
+                            <span>When accounts arrive, sync should only back up records after you choose to sign in.</span>
+                        </div>
+                        <div class="privacy-row">
+                            <b>No scare tactics</b>
+                            <span>Insights should explain your numbers practically, not pressure you.</span>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /privacy trust -->
 
             <!-- Feedback Footer -->
             <div class="feedback-footer">

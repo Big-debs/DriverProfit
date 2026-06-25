@@ -88,6 +88,29 @@ const OPERATOR_MODES = {
     },
 };
 
+const TRIP_TYPES = {
+    car: [
+        { value: 'bolt', label: 'Bolt' },
+        { value: 'uber', label: 'Uber' },
+        { value: 'indrive', label: 'InDrive' },
+        { value: 'offline', label: 'Offline' },
+        { value: 'private_hire', label: 'Private Hire' },
+    ],
+    bike: [
+        { value: 'delivery', label: 'Delivery' },
+        { value: 'cod', label: 'COD' },
+        { value: 'express', label: 'Express' },
+        { value: 'failed_delivery', label: 'Failed Delivery' },
+        { value: 'private_hire', label: 'Private Hire' },
+    ],
+    keke: [
+        { value: 'route', label: 'Route' },
+        { value: 'charter', label: 'Charter' },
+        { value: 'school_run', label: 'School Run' },
+        { value: 'market_run', label: 'Market Run' },
+    ],
+};
+
 const FUEL_TYPE_BTN_MAP = {
     petrol:   'ftPetrol',
     diesel:   'ftDiesel',
@@ -209,6 +232,9 @@ let acOn                  = false;
 let acPenaltyPct          = 15;
 let fuelType              = 'petrol';
 let operatorMode          = 'car';
+let currentTripType       = 'bolt';
+let selectedHistoryDate   = null;
+let pendingImportBackup   = null;
 let fixedCosts            = { loan: 0, data: 0, parking: 0, wash: 0 };
 
 // ── DOM refs ──
@@ -295,6 +321,7 @@ function saveLedger() {
             ledgerByDate,
             fuelType,
             operatorMode,
+            currentTripType,
             fixedCosts: currentFixedCosts,
         }));
     } catch {}
@@ -321,6 +348,7 @@ function loadLedger() {
                 };
                 if (data.fuelType)   fuelType    = data.fuelType;
                 if (data.operatorMode) operatorMode = data.operatorMode;
+                if (data.currentTripType) currentTripType = data.currentTripType;
                 if (data.fixedCosts) fixedCosts  = data.fixedCosts;
             }
             const todayEntry = ledgerByDate[activeDateKey] || { trips: [], fixedCosts };
@@ -332,9 +360,36 @@ function loadLedger() {
 
 function setOperatorMode(mode) {
     operatorMode = OPERATOR_MODES[mode] ? mode : 'car';
+    const modeTypes = TRIP_TYPES[operatorMode] || TRIP_TYPES.car;
+    if (!modeTypes.some(type => type.value === currentTripType)) {
+        currentTripType = modeTypes[0].value;
+    }
     applyOperatorMode();
     saveLedger();
     updateCurrentTripPreview();
+}
+
+function setTripType(type) {
+    const modeTypes = TRIP_TYPES[operatorMode] || TRIP_TYPES.car;
+    currentTripType = modeTypes.some(t => t.value === type) ? type : modeTypes[0].value;
+    renderTripTypeTabs();
+    saveLedger();
+}
+
+function tripTypeLabel(value) {
+    const allTypes = Object.values(TRIP_TYPES).flat();
+    return allTypes.find(type => type.value === value)?.label || value || 'Trip';
+}
+
+function renderTripTypeTabs() {
+    const wrap = document.getElementById('tripTypeTabs');
+    if (!wrap) return;
+    const types = TRIP_TYPES[operatorMode] || TRIP_TYPES.car;
+    if (!types.some(type => type.value === currentTripType)) currentTripType = types[0].value;
+    wrap.innerHTML = types.map(type => `
+        <button type="button" class="type-tab ${type.value === currentTripType ? 'active' : ''}"
+                onclick="setTripType('${type.value}')">${type.label}</button>
+    `).join('');
 }
 
 function applyOperatorMode() {
@@ -361,6 +416,7 @@ function applyOperatorMode() {
         if (el) el.textContent = text;
     });
     elTripGross.placeholder = cfg.grossPlaceholder;
+    renderTripTypeTabs();
 
     const modeExtra = document.getElementById('modeExtraFields');
     const bikeExtra = document.getElementById('bikeExtraFields');
@@ -670,6 +726,7 @@ function addTrip() {
         sync_status: 'pending',
         date: activeDateKey,
         mode: operatorMode,
+        tripType: currentTripType,
         acWasOn: acOn,
         fuelType,
         platform: currentPlatform,
@@ -727,6 +784,7 @@ function renderLedger() {
         const mColor       = marginColor(trip.margin);
         const tripFuelType = trip.fuelType || 'petrol';
         const tripMode = OPERATOR_MODES[trip.mode || 'car']?.label || 'E-hailing Car';
+        const tripTypeName = tripTypeLabel(trip.tripType);
         const unitLabel    = FUEL_TYPES[tripFuelType]?.unitLabel || 'L';
 
         const acBadge   = trip.acWasOn
@@ -767,6 +825,7 @@ function renderLedger() {
                         <span class="trip-name">Trip #${idx + 1}</span>
                         ${platBadge}
                         <span class="badge badge-gray">${tripMode}</span>
+                        <span class="badge badge-gray">${tripTypeName}</span>
                         <span class="badge badge-gray">${trip.distance} km · ${trip.hours}h</span>
                         ${acBadge}${fuelBadge}
                     </div>
@@ -851,6 +910,15 @@ function formatHistoryDate(key) {
     });
 }
 
+function formatLongDate(key) {
+    return parseDateKey(key).toLocaleDateString('en-NG', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
 function renderHistory() {
     saveLedger();
     const entries = Object.entries(ledgerByDate)
@@ -904,6 +972,12 @@ function renderHistory() {
     entries.forEach(item => {
         const row = document.createElement('div');
         row.className = 'history-row';
+        row.setAttribute('role', 'button');
+        row.setAttribute('tabindex', '0');
+        row.onclick = () => showHistoryDetail(item.date);
+        row.onkeydown = e => {
+            if (e.key === 'Enter' || e.key === ' ') showHistoryDetail(item.date);
+        };
         const netColor = item.totals.trueNet < 0 ? 'var(--red)' : 'var(--green)';
         const extraHistoryMetric = item.totals.drops > 0
             ? `<span>Profit/drop <b>${fmt(item.totals.profitPerDrop)}</b></span>`
@@ -925,6 +999,53 @@ function renderHistory() {
             </div>`;
         list.appendChild(row);
     });
+}
+
+function closeHistoryDetail() {
+    const card = document.getElementById('historyDetailCard');
+    if (card) card.style.display = 'none';
+    selectedHistoryDate = null;
+}
+
+function showHistoryDetail(dateKey) {
+    const entry = ledgerByDate[dateKey];
+    if (!entry) return;
+    selectedHistoryDate = dateKey;
+    const trips = entry.trips || [];
+    const totals = sumTrips(trips, entry.fixedCosts || {});
+    const card = document.getElementById('historyDetailCard');
+    const title = document.getElementById('historyDetailTitle');
+    const summary = document.getElementById('historyDetailSummary');
+    const list = document.getElementById('historyDetailList');
+    if (!card || !title || !summary || !list) return;
+
+    title.textContent = formatLongDate(dateKey);
+    summary.innerHTML = `
+        <div><span>Net</span><b>${fmt(totals.trueNet)}</b></div>
+        <div><span>Trips</span><b>${totals.trips}</b></div>
+        <div><span>Distance</span><b>${totals.distance.toFixed(0)} km</b></div>
+        <div><span>Hours</span><b>${totals.hours.toFixed(1)}h</b></div>`;
+    list.innerHTML = '';
+    trips.forEach((trip, index) => {
+        const mode = OPERATOR_MODES[trip.mode || 'car']?.label || 'E-hailing Car';
+        const type = tripTypeLabel(trip.tripType);
+        const modeMeta = trip.mode === 'bike' && trip.drops > 0
+            ? ` · ${trip.drops} drops · ${fmt(trip.profitPerDrop || 0)}/drop`
+            : trip.mode === 'keke' && trip.passengers > 0
+                ? ` · ${trip.passengers} passengers · ${fmt(trip.profitPerPassenger || 0)}/passenger`
+                : '';
+        const row = document.createElement('div');
+        row.className = 'history-detail-row';
+        row.innerHTML = `
+            <div>
+                <p class="history-date">${index + 1}. ${type}</p>
+                <p class="history-meta">${mode} · ${trip.distance || 0} km · ${trip.hours || 0}h${modeMeta}</p>
+            </div>
+            <b style="color:${(trip.net || 0) < 0 ? 'var(--red)' : 'var(--green)'}">${fmt(trip.net || 0)}</b>`;
+        list.appendChild(row);
+    });
+    card.style.display = '';
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function getPeriodEntries(daysBack = 6) {
@@ -979,6 +1100,25 @@ function modeBreakdown(trips) {
         label: OPERATOR_MODES[mode]?.label || mode,
         ...data,
     }));
+}
+
+function tripTypeBreakdown(trips) {
+    const byType = {};
+    trips.forEach(trip => {
+        const key = trip.tripType || 'unknown';
+        if (!byType[key]) byType[key] = { trips: 0, net: 0, distance: 0 };
+        byType[key].trips += 1;
+        byType[key].net += trip.net || 0;
+        byType[key].distance += trip.distance || 0;
+    });
+    return Object.entries(byType)
+        .map(([type, data]) => ({
+            type,
+            label: tripTypeLabel(type),
+            ...data,
+            profitPerKm: data.distance > 0 ? data.net / data.distance : 0,
+        }))
+        .filter(item => item.trips > 0);
 }
 
 function makeInsight(type, title, body, meta) {
@@ -1089,6 +1229,18 @@ function buildInsights(entries) {
             `${modes[0].label} led take-home`,
             `${modes[0].label} produced ${fmt(modes[0].net)} across ${modes[0].trips} records in this period.`,
             'Mixed operator modes'
+        ));
+    }
+
+    const typeStats = tripTypeBreakdown(trips).filter(type => type.distance > 0);
+    if (typeStats.length > 1) {
+        typeStats.sort((a, b) => a.profitPerKm - b.profitPerKm);
+        const weakest = typeStats[0];
+        insights.push(makeInsight(
+            weakest.profitPerKm < 150 ? 'warning' : 'neutral',
+            `${weakest.label} is weakest by km`,
+            `${weakest.label} averaged ${fmt(weakest.profitPerKm)}/km across ${weakest.trips} records.`,
+            'Trip type comparison'
         ));
     }
 
@@ -1354,21 +1506,53 @@ function csvValue(value) {
     return `"${text.replace(/"/g, '""')}"`;
 }
 
+const CSV_FIELDS = [
+    'date', 'client_id', 'sync_status', 'mode', 'tripType', 'tripTypeLabel', 'platform', 'platformPct', 'gross',
+    'distance', 'hours', 'drops', 'failedDrops', 'successfulDrops', 'passengers', 'turns',
+    'platDeduct', 'fuelCost', 'maintCost', 'net', 'revPkm', 'costPkm', 'profPkm',
+    'profitPerDrop', 'costPerDrop', 'profitPerPassenger', 'profitPerTurn',
+    'margin', 'fuelType', 'acWasOn',
+];
+
+function tripsToCsv(trips) {
+    const rows = [CSV_FIELDS.join(',')].concat(
+        trips.map(trip => CSV_FIELDS.map(field => csvValue(field === 'tripTypeLabel' ? tripTypeLabel(trip.tripType) : trip[field])).join(','))
+    );
+    return rows.join('\n');
+}
+
 function exportTripsCsv() {
     const trips = getAllTrips();
-    const fields = [
-        'date', 'client_id', 'sync_status', 'mode', 'platform', 'platformPct', 'gross',
-        'distance', 'hours', 'drops', 'failedDrops', 'successfulDrops', 'passengers', 'turns',
-        'platDeduct', 'fuelCost', 'maintCost', 'net', 'revPkm', 'costPkm', 'profPkm',
-        'profitPerDrop', 'costPerDrop', 'profitPerPassenger', 'profitPerTurn',
-        'margin', 'fuelType', 'acWasOn',
-    ];
-    const rows = [fields.join(',')].concat(
-        trips.map(trip => fields.map(field => csvValue(trip[field])).join(','))
-    );
-    downloadText(`driverprofit-trips-${activeDateKey}.csv`, rows.join('\n'), 'text/csv;charset=utf-8');
+    downloadText(`driverprofit-trips-${activeDateKey}.csv`, tripsToCsv(trips), 'text/csv;charset=utf-8');
     setBackupStatus(`Exported ${trips.length} trip${trips.length === 1 ? '' : 's'} as CSV.`, 'good');
     trackEvent('Export Trips CSV', { trips: trips.length });
+}
+
+function exportSelectedHistoryDayCsv() {
+    if (!selectedHistoryDate || !ledgerByDate[selectedHistoryDate]) return;
+    const trips = (ledgerByDate[selectedHistoryDate].trips || []).map(trip => ({ ...trip, date: trip.date || selectedHistoryDate }));
+    downloadText(`driverprofit-${selectedHistoryDate}.csv`, tripsToCsv(trips), 'text/csv;charset=utf-8');
+    trackEvent('Export History Day CSV', { date: selectedHistoryDate, trips: trips.length });
+}
+
+function shareSelectedHistoryDayWhatsApp() {
+    if (!selectedHistoryDate || !ledgerByDate[selectedHistoryDate]) return;
+    const entry = ledgerByDate[selectedHistoryDate];
+    const trips = entry.trips || [];
+    const totals = sumTrips(trips, entry.fixedCosts || {});
+    let msg = `*DriverProfit Summary*\n${formatLongDate(selectedHistoryDate)}\n\n`;
+    msg += `${totals.trips} records Â· ${totals.distance.toFixed(0)} km Â· ${totals.hours.toFixed(1)}h\n\n`;
+    msg += `Gross: ${fmt(totals.gross)}\n`;
+    msg += `Platform Fees: -${fmt(totals.platform)}\n`;
+    msg += `Fuel / Energy: -${fmt(totals.fuel)}\n`;
+    msg += `Maintenance: -${fmt(totals.maint)}\n`;
+    if (totals.fixed > 0) msg += `Fixed Costs: -${fmt(totals.fixed)}\n`;
+    msg += `\n*Take-Home: ${fmt(totals.trueNet)}*`;
+    if (totals.distance > 0) msg += `\nProfit/km: ${fmt(totals.profitPerKm)}`;
+    if (totals.drops > 0) msg += `\nProfit/drop: ${fmt(totals.profitPerDrop)}`;
+    if (totals.passengers > 0) msg += `\nProfit/passenger: ${fmt(totals.profitPerPassenger)}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    trackEvent('Share History Day WhatsApp', { date: selectedHistoryDate, trips: totals.trips });
 }
 
 function exportJsonBackup() {
@@ -1381,6 +1565,7 @@ function exportJsonBackup() {
         ledgerByDate,
         fuelType,
         operatorMode,
+        currentTripType,
         fixedCosts: getCurrentFixedCosts(),
     };
     downloadText(
@@ -1403,26 +1588,8 @@ function importJsonBackup(event) {
                 Array.isArray(backup.trips) ? { [activeDateKey]: { trips: backup.trips, fixedCosts: backup.fixedCosts || fixedCosts } } : null
             );
             if (!incomingLedger) throw new Error('No DriverProfit ledger found');
-            const ok = confirm('Restore this backup? This will replace the records currently saved on this phone.');
-            if (!ok) return;
-
-            ledgerByDate = incomingLedger;
-            fuelType = backup.fuelType || fuelType;
-            operatorMode = backup.operatorMode || operatorMode;
-            fixedCosts = backup.fixedCosts || fixedCosts;
-            const todayEntry = ledgerByDate[activeDateKey] || { trips: [], fixedCosts };
-            ledgerTrips = (todayEntry.trips || []).map(normalizeTrip);
-            fixedCosts = todayEntry.fixedCosts || fixedCosts;
-            applyFixedCostsToInputs(fixedCosts);
-            saveLedger();
-            setFuelType(fuelType);
-            applyOperatorMode();
-            renderLedger();
-            calcDailyTotals();
-            renderHistory();
-            renderInsights();
-            setBackupStatus('Backup restored on this phone.', 'good');
-            trackEvent('Import JSON Backup', { dates: Object.keys(ledgerByDate).length });
+            pendingImportBackup = { ...backup, ledgerByDate: incomingLedger };
+            showImportPreview(pendingImportBackup);
         } catch (err) {
             setBackupStatus('Could not restore that file. Choose a DriverProfit JSON backup.', 'bad');
         } finally {
@@ -1430,6 +1597,64 @@ function importJsonBackup(event) {
         }
     };
     reader.readAsText(file);
+}
+
+function summarizeLedger(ledger) {
+    return Object.entries(ledger).reduce((acc, [, entry]) => {
+        acc.days += 1;
+        acc.trips += (entry.trips || []).length;
+        acc.fixed += sumTrips(entry.trips || [], entry.fixedCosts || {}).fixed;
+        return acc;
+    }, { days: 0, trips: 0, fixed: 0 });
+}
+
+function showImportPreview(backup) {
+    const preview = document.getElementById('importPreview');
+    const body = document.getElementById('importPreviewBody');
+    if (!preview || !body) return;
+    const summary = summarizeLedger(backup.ledgerByDate);
+    const exported = backup.exported_at
+        ? new Date(backup.exported_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })
+        : 'Unknown date';
+    body.innerHTML = `
+        <p class="import-title">Backup ready to restore</p>
+        <p class="import-copy">${summary.days} saved day${summary.days === 1 ? '' : 's'} · ${summary.trips} records · exported ${exported}</p>
+        <p class="import-warning">Restoring will replace the records currently saved on this phone.</p>`;
+    preview.style.display = '';
+    setBackupStatus('Review this backup before restoring.', 'neutral');
+}
+
+function cancelImportPreview() {
+    pendingImportBackup = null;
+    const preview = document.getElementById('importPreview');
+    if (preview) preview.style.display = 'none';
+    setBackupStatus('Restore cancelled.', 'neutral');
+}
+
+function confirmImportBackup() {
+    if (!pendingImportBackup) return;
+    const backup = pendingImportBackup;
+    ledgerByDate = backup.ledgerByDate;
+    fuelType = backup.fuelType || fuelType;
+    operatorMode = backup.operatorMode || operatorMode;
+    currentTripType = backup.currentTripType || currentTripType;
+    fixedCosts = backup.fixedCosts || fixedCosts;
+    const todayEntry = ledgerByDate[activeDateKey] || { trips: [], fixedCosts };
+    ledgerTrips = (todayEntry.trips || []).map(normalizeTrip);
+    fixedCosts = todayEntry.fixedCosts || fixedCosts;
+    applyFixedCostsToInputs(fixedCosts);
+    saveLedger();
+    setFuelType(fuelType);
+    applyOperatorMode();
+    renderLedger();
+    calcDailyTotals();
+    renderHistory();
+    renderInsights();
+    pendingImportBackup = null;
+    const preview = document.getElementById('importPreview');
+    if (preview) preview.style.display = 'none';
+    setBackupStatus('Backup restored on this phone.', 'good');
+    trackEvent('Import JSON Backup', { dates: Object.keys(ledgerByDate).length });
 }
 
 function showTab(name) {
