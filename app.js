@@ -35,6 +35,58 @@ const PLATFORM_PRESETS = { btnBolt: 20, btnUber: 25, btnInDrive: 7.5, btnZero: 0
 const PLATFORM_NAMES   = { btnBolt: 'Bolt', btnUber: 'Uber', btnInDrive: 'InDrive', btnZero: 'None' };
 const DEFAULT_EFFICIENCY = 11;
 const STORAGE_KEY = 'driverprofit_ledger';
+const STORAGE_VERSION = 2;
+
+const OPERATOR_MODE_BTN_IDS = {
+    car: 'modeCar',
+    bike: 'modeBike',
+    keke: 'modeKeke',
+};
+
+const OPERATOR_MODES = {
+    car: {
+        label: 'E-hailing Car',
+        logTitle: 'Log Trip',
+        grossLabel: 'Gross Earnings (â‚¦)',
+        grossPlaceholder: 'e.g. 12000',
+        distanceLabel: 'Distance (km)',
+        hoursLabel: 'Duration (hrs)',
+        addLabel: 'Add Trip to Ledger',
+        platformLabel: 'Platform Commission',
+        vehicleLabel: 'Vehicle',
+        fixedLabels: ['Car Loan / Hire Purchase', 'Data Subscription', 'Parking / Toll', 'Car Wash'],
+        unitPrimary: 'Profit/km',
+        unitSecondary: 'Profit/hr',
+    },
+    bike: {
+        label: 'Dispatch Bike',
+        logTitle: 'Log Delivery',
+        grossLabel: 'Delivery Fee / Payout (â‚¦)',
+        grossPlaceholder: 'e.g. 3500',
+        distanceLabel: 'Delivery Distance (km)',
+        hoursLabel: 'Time Spent (hrs)',
+        addLabel: 'Add Delivery to Ledger',
+        platformLabel: 'Company / Platform Commission',
+        vehicleLabel: 'Bike Preset',
+        fixedLabels: ['Rider Remittance', 'Data Subscription', 'Parking / Security', 'Power / Charging'],
+        unitPrimary: 'Profit/km',
+        unitSecondary: 'Profit/hr',
+    },
+    keke: {
+        label: 'Keke / Tricycle',
+        logTitle: 'Log Route / Charter',
+        grossLabel: 'Fare Collected (â‚¦)',
+        grossPlaceholder: 'e.g. 8000',
+        distanceLabel: 'Route Distance (km)',
+        hoursLabel: 'Hours Worked',
+        addLabel: 'Add Route to Ledger',
+        platformLabel: 'Union / Platform Commission',
+        vehicleLabel: 'Keke Preset',
+        fixedLabels: ['Owner Delivery / Remittance', 'Union Ticket', 'Park Ticket', 'Loading / Wash'],
+        unitPrimary: 'Profit/km',
+        unitSecondary: 'Profit/hr',
+    },
+};
 
 const FUEL_TYPE_BTN_MAP = {
     petrol:   'ftPetrol',
@@ -151,9 +203,12 @@ let platformFeePercentage = 20;
 let currentPlatform       = 'Bolt';
 let isSheetOpen           = false;
 let ledgerTrips           = [];
+let ledgerByDate          = {};
+let activeDateKey         = getTodayKey();
 let acOn                  = false;
 let acPenaltyPct          = 15;
 let fuelType              = 'petrol';
+let operatorMode          = 'car';
 let fixedCosts            = { loan: 0, data: 0, parking: 0, wash: 0 };
 
 // ── DOM refs ──
@@ -165,6 +220,10 @@ const elManualEfficiency = document.getElementById('manualEfficiency');
 const elTripGross        = document.getElementById('tripGross');
 const elTripDistance     = document.getElementById('tripDistance');
 const elTripHours        = document.getElementById('tripHours');
+const elTripDrops        = document.getElementById('tripDrops');
+const elTripFailedDrops  = document.getElementById('tripFailedDrops');
+const elTripPassengers   = document.getElementById('tripPassengers');
+const elTripTurns        = document.getElementById('tripTurns');
 const elMaintRateInput   = document.getElementById('maintRateInput');
 
 // ── Formatting ──
@@ -174,17 +233,69 @@ const fmt = n => {
 };
 
 // ── Persistence ──
+function getTodayKey() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function todayLabel() {
+    return new Date().toLocaleDateString('en-NG', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
+
+function createClientId() {
+    if (globalThis.crypto?.randomUUID) return `local_${globalThis.crypto.randomUUID()}`;
+    return `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeTrip(trip) {
+    if (!trip.client_id) trip.client_id = createClientId();
+    if (!trip.sync_status) trip.sync_status = 'pending';
+    if (!trip.date) trip.date = activeDateKey;
+    return {
+        ...trip,
+    };
+}
+
+function getCurrentFixedCosts() {
+    return {
+        loan:    parseFloat(document.getElementById('fcLoan').value)    || 0,
+        data:    parseFloat(document.getElementById('fcData').value)    || 0,
+        parking: parseFloat(document.getElementById('fcParking').value) || 0,
+        wash:    parseFloat(document.getElementById('fcWash').value)    || 0,
+    };
+}
+
+function applyFixedCostsToInputs(costs) {
+    document.getElementById('fcLoan').value    = costs.loan    || '';
+    document.getElementById('fcData').value    = costs.data    || '';
+    document.getElementById('fcParking').value = costs.parking || '';
+    document.getElementById('fcWash').value    = costs.wash    || '';
+    document.getElementById('fcTotal').textContent =
+        fmt((costs.loan || 0) + (costs.data || 0) + (costs.parking || 0) + (costs.wash || 0));
+}
+
 function saveLedger() {
     try {
+        const currentFixedCosts = getCurrentFixedCosts();
+        ledgerByDate[activeDateKey] = {
+            trips: ledgerTrips.map(normalizeTrip),
+            fixedCosts: currentFixedCosts,
+        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            trips: ledgerTrips,
+            version: STORAGE_VERSION,
+            currentDate: activeDateKey,
+            ledgerByDate,
             fuelType,
-            fixedCosts: {
-                loan:    parseFloat(document.getElementById('fcLoan').value)    || 0,
-                data:    parseFloat(document.getElementById('fcData').value)    || 0,
-                parking: parseFloat(document.getElementById('fcParking').value) || 0,
-                wash:    parseFloat(document.getElementById('fcWash').value)    || 0,
-            },
+            operatorMode,
+            fixedCosts: currentFixedCosts,
         }));
     } catch {}
 }
@@ -195,14 +306,80 @@ function loadLedger() {
         if (stored) {
             const data = JSON.parse(stored);
             if (Array.isArray(data)) {
-                ledgerTrips = data;
+                ledgerByDate = {
+                    [activeDateKey]: {
+                        trips: data.map(normalizeTrip),
+                        fixedCosts,
+                    },
+                };
             } else {
-                ledgerTrips = data.trips || [];
+                ledgerByDate = data.ledgerByDate || {
+                    [activeDateKey]: {
+                        trips: (data.trips || []).map(normalizeTrip),
+                        fixedCosts: data.fixedCosts || fixedCosts,
+                    },
+                };
                 if (data.fuelType)   fuelType    = data.fuelType;
+                if (data.operatorMode) operatorMode = data.operatorMode;
                 if (data.fixedCosts) fixedCosts  = data.fixedCosts;
             }
+            const todayEntry = ledgerByDate[activeDateKey] || { trips: [], fixedCosts };
+            ledgerTrips = (todayEntry.trips || []).map(normalizeTrip);
+            fixedCosts = todayEntry.fixedCosts || fixedCosts;
         }
     } catch { ledgerTrips = []; }
+}
+
+function setOperatorMode(mode) {
+    operatorMode = OPERATOR_MODES[mode] ? mode : 'car';
+    applyOperatorMode();
+    saveLedger();
+    updateCurrentTripPreview();
+}
+
+function applyOperatorMode() {
+    const cfg = OPERATOR_MODES[operatorMode] || OPERATOR_MODES.car;
+    Object.entries(OPERATOR_MODE_BTN_IDS).forEach(([mode, id]) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.toggle('active', mode === operatorMode);
+    });
+    const labelPairs = [
+        ['logTitleText', cfg.logTitle],
+        ['grossLabel', cfg.grossLabel],
+        ['distanceLabel', cfg.distanceLabel],
+        ['hoursLabel', cfg.hoursLabel],
+        ['addTripLabel', cfg.addLabel],
+        ['platformLabel', cfg.platformLabel],
+        ['vehicleLabel', cfg.vehicleLabel],
+        ['fcLoanLabel', cfg.fixedLabels[0]],
+        ['fcDataLabel', cfg.fixedLabels[1]],
+        ['fcParkingLabel', cfg.fixedLabels[2]],
+        ['fcWashLabel', cfg.fixedLabels[3]],
+    ];
+    labelPairs.forEach(([id, text]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    });
+    elTripGross.placeholder = cfg.grossPlaceholder;
+
+    const modeExtra = document.getElementById('modeExtraFields');
+    const bikeExtra = document.getElementById('bikeExtraFields');
+    const kekeExtra = document.getElementById('kekeExtraFields');
+    if (modeExtra) modeExtra.style.display = operatorMode === 'car' ? 'none' : '';
+    if (bikeExtra) bikeExtra.style.display = operatorMode === 'bike' ? '' : 'none';
+    if (kekeExtra) kekeExtra.style.display = operatorMode === 'keke' ? '' : 'none';
+
+    const metricStrip = document.getElementById('modeMetricStrip');
+    const labelA = document.getElementById('modeMetricLabelA');
+    const labelB = document.getElementById('modeMetricLabelB');
+    if (metricStrip) metricStrip.style.display = operatorMode === 'car' ? 'none' : '';
+    if (operatorMode === 'bike') {
+        if (labelA) labelA.textContent = 'Profit/drop';
+        if (labelB) labelB.textContent = 'Cost/drop';
+    } else if (operatorMode === 'keke') {
+        if (labelA) labelA.textContent = 'Profit/passenger';
+        if (labelB) labelB.textContent = 'Profit/turn';
+    }
 }
 
 // ── Animated profit counter ──
@@ -400,6 +577,10 @@ function calcTrip() {
     const gross     = Math.max(0, parseFloat(elTripGross.value)          || 0);
     const distance  = Math.max(0, parseFloat(elTripDistance.value)       || 0);
     const hours     = Math.max(0, parseFloat(elTripHours.value)          || 0);
+    const drops     = Math.max(0, parseFloat(elTripDrops?.value)          || 0);
+    const failedDrops = Math.max(0, parseFloat(elTripFailedDrops?.value)  || 0);
+    const passengers = Math.max(0, parseFloat(elTripPassengers?.value)    || 0);
+    const turns     = Math.max(0, parseFloat(elTripTurns?.value)          || 0);
     const fuelPrice = Math.max(0, parseFloat(elFuelPrice.value)          || 0);
     const baseEff   = Math.max(0.1, parseFloat(elManualEfficiency.value) || DEFAULT_EFFICIENCY);
     const maintRate = Math.max(0, parseFloat(elMaintRateInput.value)     || 0);
@@ -414,8 +595,18 @@ function calcTrip() {
     const costPkm    = distance > 0 ? (platDeduct + fuelCost + maintCost) / distance : 0;
     const profPkm    = distance > 0 ? net / distance : 0;
     const margin     = gross > 0 ? (net / gross) * 100 : 0;
+    const successfulDrops = Math.max(0, drops - failedDrops);
+    const costTotal = platDeduct + fuelCost + maintCost;
+    const profitPerDrop = drops > 0 ? net / drops : 0;
+    const costPerDrop = drops > 0 ? costTotal / drops : 0;
+    const profitPerPassenger = passengers > 0 ? net / passengers : 0;
+    const profitPerTurn = turns > 0 ? net / turns : 0;
 
-    return { gross, distance, hours, liters: units, platDeduct, fuelCost, maintCost, net, revPkm, costPkm, profPkm, margin };
+    return {
+        gross, distance, hours, drops, failedDrops, successfulDrops, passengers, turns,
+        liters: units, platDeduct, fuelCost, maintCost, net, revPkm, costPkm, profPkm,
+        margin, profitPerDrop, costPerDrop, profitPerPassenger, profitPerTurn,
+    };
 }
 
 function marginColor(margin) {
@@ -444,6 +635,16 @@ function updateCurrentTripPreview() {
     marginEl.textContent = s.margin.toFixed(0) + '%';
     marginEl.style.color = marginColor(s.margin);
 
+    const metricA = document.getElementById('modeMetricValueA');
+    const metricB = document.getElementById('modeMetricValueB');
+    if (operatorMode === 'bike') {
+        if (metricA) metricA.textContent = fmt(s.profitPerDrop);
+        if (metricB) metricB.textContent = fmt(s.costPerDrop);
+    } else if (operatorMode === 'keke') {
+        if (metricA) metricA.textContent = fmt(s.profitPerPassenger);
+        if (metricB) metricB.textContent = fmt(s.profitPerTurn);
+    }
+
     const mRate = parseFloat(elMaintRateInput.value) || 0;
     const dist  = parseFloat(elTripDistance.value)   || 0;
     const hint  = document.getElementById('maintEstimate');
@@ -465,6 +666,10 @@ function addTrip() {
     if (s.gross <= 0 && s.distance <= 0) return;
     ledgerTrips.push({
         id: Date.now(),
+        client_id: createClientId(),
+        sync_status: 'pending',
+        date: activeDateKey,
+        mode: operatorMode,
         acWasOn: acOn,
         fuelType,
         platform: currentPlatform,
@@ -472,10 +677,16 @@ function addTrip() {
         ...s,
     });
     elTripGross.value = elTripDistance.value = elTripHours.value = '';
+    if (elTripDrops) elTripDrops.value = '';
+    if (elTripFailedDrops) elTripFailedDrops.value = '';
+    if (elTripPassengers) elTripPassengers.value = '';
+    if (elTripTurns) elTripTurns.value = '';
     updateCurrentTripPreview();
     renderLedger();
     calcDailyTotals();
     saveLedger();
+    renderHistory();
+    renderInsights();
     const btn = document.getElementById('addTripBtn');
     btn.classList.add('btn-flash');
     setTimeout(() => btn.classList.remove('btn-flash'), 380);
@@ -487,13 +698,21 @@ function deleteTrip(id) {
     renderLedger();
     calcDailyTotals();
     saveLedger();
+    renderHistory();
+    renderInsights();
 }
 
 function clearLedger() {
+    if (ledgerTrips.length) {
+        const ok = confirm('Clear all trips logged for today? Export a backup first if you need these records later.');
+        if (!ok) return;
+    }
     ledgerTrips = [];
     renderLedger();
     calcDailyTotals();
     saveLedger();
+    renderHistory();
+    renderInsights();
 }
 
 function renderLedger() {
@@ -507,6 +726,7 @@ function renderLedger() {
         const netColor     = trip.net < 0 ? 'var(--red)' : 'var(--green)';
         const mColor       = marginColor(trip.margin);
         const tripFuelType = trip.fuelType || 'petrol';
+        const tripMode = OPERATOR_MODES[trip.mode || 'car']?.label || 'E-hailing Car';
         const unitLabel    = FUEL_TYPES[tripFuelType]?.unitLabel || 'L';
 
         const acBadge   = trip.acWasOn
@@ -525,6 +745,19 @@ function renderLedger() {
             ? `<span class="trip-sep">|</span><span>Wear: <b style="color:var(--purple)">₦${Math.round(trip.maintCost).toLocaleString()}</b></span>`
             : '';
 
+        const modeCostLine = trip.mode === 'bike' && trip.drops > 0
+            ? `<span class="trip-sep">|</span><span>Drops: <b style="color:var(--blue)">${trip.drops}</b></span>`
+            : trip.mode === 'keke' && trip.passengers > 0
+                ? `<span class="trip-sep">|</span><span>Passengers: <b style="color:var(--blue)">${trip.passengers}</b></span>`
+                : '';
+        const modeEcoCells = trip.mode === 'bike'
+            ? `<div>Profit/drop<b style="color:var(--green)">${fmt(trip.profitPerDrop || 0)}</b></div>
+               <div>Cost/drop<b style="color:var(--red)">${fmt(trip.costPerDrop || 0)}</b></div>`
+            : trip.mode === 'keke'
+                ? `<div>Profit/passenger<b style="color:var(--green)">${fmt(trip.profitPerPassenger || 0)}</b></div>
+                   <div>Profit/turn<b style="color:var(--gold)">${fmt(trip.profitPerTurn || 0)}</b></div>`
+                : '';
+
         const row = document.createElement('div');
         row.className = 'trip-row';
         row.innerHTML = `
@@ -533,6 +766,7 @@ function renderLedger() {
                     <div class="trip-tags">
                         <span class="trip-name">Trip #${idx + 1}</span>
                         ${platBadge}
+                        <span class="badge badge-gray">${tripMode}</span>
                         <span class="badge badge-gray">${trip.distance} km · ${trip.hours}h</span>
                         ${acBadge}${fuelBadge}
                     </div>
@@ -543,6 +777,7 @@ function renderLedger() {
                         <span class="trip-sep">|</span>
                         <span>Fuel: <b style="color:var(--amber)">₦${Math.round(trip.fuelCost).toLocaleString()}</b> (${trip.liters.toFixed(1)} ${unitLabel})</span>
                         ${maintLine}
+                        ${modeCostLine}
                     </div>
                 </div>
                 <div class="trip-net-col">
@@ -563,12 +798,353 @@ function renderLedger() {
                 <div>Cost/km<b style="color:var(--red)">₦${Math.round(trip.costPkm)}</b></div>
                 <div>Profit/km<b style="color:var(--green)">₦${Math.round(trip.profPkm)}</b></div>
                 <div>Margin<b style="color:${mColor}">${trip.margin.toFixed(0)}%</b></div>
+                ${modeEcoCells}
             </div>`;
         list.appendChild(row);
     });
 }
 
 // ── Daily totals ──
+function sumTrips(trips, fixed = { loan: 0, data: 0, parking: 0, wash: 0 }) {
+    const totals = trips.reduce((acc, trip) => {
+        acc.gross += trip.gross || 0;
+        acc.distance += trip.distance || 0;
+        acc.hours += trip.hours || 0;
+        acc.platform += trip.platDeduct || 0;
+        acc.fuel += trip.fuelCost || 0;
+        acc.maint += trip.maintCost || 0;
+        acc.net += trip.net || 0;
+        acc.drops += trip.drops || 0;
+        acc.passengers += trip.passengers || 0;
+        acc.turns += trip.turns || 0;
+        return acc;
+    }, { gross: 0, distance: 0, hours: 0, platform: 0, fuel: 0, maint: 0, net: 0, drops: 0, passengers: 0, turns: 0 });
+    totals.fixed = (fixed.loan || 0) + (fixed.data || 0) + (fixed.parking || 0) + (fixed.wash || 0);
+    totals.trueNet = totals.net - totals.fixed;
+    totals.trips = trips.length;
+    totals.profitPerKm = totals.distance > 0 ? totals.trueNet / totals.distance : 0;
+    totals.profitPerHour = totals.hours > 0 ? totals.trueNet / totals.hours : 0;
+    totals.profitPerDrop = totals.drops > 0 ? totals.trueNet / totals.drops : 0;
+    totals.profitPerPassenger = totals.passengers > 0 ? totals.trueNet / totals.passengers : 0;
+    totals.profitPerTurn = totals.turns > 0 ? totals.trueNet / totals.turns : 0;
+    return totals;
+}
+
+function parseDateKey(key) {
+    const [year, month, day] = key.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function startOfWeek(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function formatHistoryDate(key) {
+    return parseDateKey(key).toLocaleDateString('en-NG', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+    });
+}
+
+function renderHistory() {
+    saveLedger();
+    const entries = Object.entries(ledgerByDate)
+        .map(([date, entry]) => ({
+            date,
+            totals: sumTrips(entry.trips || [], entry.fixedCosts || {}),
+        }))
+        .filter(item => item.totals.trips > 0 || item.totals.fixed > 0)
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+    const today = parseDateKey(activeDateKey);
+    const weekStart = startOfWeek(today);
+    const monthKey = activeDateKey.slice(0, 7);
+    const weekTotals = entries
+        .filter(item => parseDateKey(item.date) >= weekStart)
+        .reduce((acc, item) => {
+            acc.trueNet += item.totals.trueNet;
+            acc.trips += item.totals.trips;
+            acc.distance += item.totals.distance;
+            return acc;
+        }, { trueNet: 0, trips: 0, distance: 0 });
+    const monthTotals = entries
+        .filter(item => item.date.startsWith(monthKey))
+        .reduce((acc, item) => {
+            acc.trueNet += item.totals.trueNet;
+            acc.trips += item.totals.trips;
+            acc.distance += item.totals.distance;
+            return acc;
+        }, { trueNet: 0, trips: 0, distance: 0 });
+
+    const weekNet = document.getElementById('historyWeekNet');
+    const weekMeta = document.getElementById('historyWeekMeta');
+    const monthNet = document.getElementById('historyMonthNet');
+    const monthMeta = document.getElementById('historyMonthMeta');
+    const dayCount = document.getElementById('historyDayCount');
+    if (weekNet) weekNet.textContent = fmt(weekTotals.trueNet);
+    if (weekMeta) weekMeta.textContent = `${weekTotals.trips} trips · ${weekTotals.distance.toFixed(0)} km`;
+    if (monthNet) monthNet.textContent = fmt(monthTotals.trueNet);
+    if (monthMeta) monthMeta.textContent = `${monthTotals.trips} trips · ${monthTotals.distance.toFixed(0)} km`;
+    if (dayCount) dayCount.textContent = `${entries.length} day${entries.length === 1 ? '' : 's'}`;
+
+    const list = document.getElementById('historyList');
+    const empty = document.getElementById('noHistoryMessage');
+    if (!list || !empty) return;
+    list.querySelectorAll('.history-row').forEach(n => n.remove());
+    if (!entries.length) {
+        empty.style.display = '';
+        return;
+    }
+    empty.style.display = 'none';
+    entries.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'history-row';
+        const netColor = item.totals.trueNet < 0 ? 'var(--red)' : 'var(--green)';
+        const extraHistoryMetric = item.totals.drops > 0
+            ? `<span>Profit/drop <b>${fmt(item.totals.profitPerDrop)}</b></span>`
+            : item.totals.passengers > 0
+                ? `<span>Profit/passenger <b>${fmt(item.totals.profitPerPassenger)}</b></span>`
+                : '';
+        row.innerHTML = `
+            <div class="history-main">
+                <div>
+                    <p class="history-date">${formatHistoryDate(item.date)}</p>
+                    <p class="history-meta">${item.totals.trips} trips · ${item.totals.distance.toFixed(0)} km · ${item.totals.hours.toFixed(1)}h</p>
+                </div>
+                <b style="color:${netColor}">${fmt(item.totals.trueNet)}</b>
+            </div>
+            <div class="history-units">
+                <span>Profit/km <b>${fmt(item.totals.profitPerKm)}</b></span>
+                <span>Profit/hr <b>${fmt(item.totals.profitPerHour)}</b></span>
+                ${extraHistoryMetric}
+            </div>`;
+        list.appendChild(row);
+    });
+}
+
+function getPeriodEntries(daysBack = 6) {
+    saveLedger();
+    const today = parseDateKey(activeDateKey);
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysBack);
+    return Object.entries(ledgerByDate)
+        .filter(([date]) => {
+            const d = parseDateKey(date);
+            return d >= start && d <= today;
+        })
+        .map(([date, entry]) => ({
+            date,
+            trips: entry.trips || [],
+            fixedCosts: entry.fixedCosts || {},
+            totals: sumTrips(entry.trips || [], entry.fixedCosts || {}),
+        }))
+        .filter(item => item.totals.trips > 0 || item.totals.fixed > 0)
+        .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function platformBreakdown(trips) {
+    const byPlatform = {};
+    trips.forEach(trip => {
+        const name = trip.platform || 'Unknown';
+        if (!byPlatform[name]) byPlatform[name] = { trips: 0, gross: 0, net: 0, distance: 0 };
+        byPlatform[name].trips += 1;
+        byPlatform[name].gross += trip.gross || 0;
+        byPlatform[name].net += trip.net || 0;
+        byPlatform[name].distance += trip.distance || 0;
+    });
+    return Object.entries(byPlatform)
+        .map(([name, data]) => ({
+            name,
+            ...data,
+            profitPerKm: data.distance > 0 ? data.net / data.distance : 0,
+        }))
+        .filter(item => item.trips > 0);
+}
+
+function modeBreakdown(trips) {
+    const byMode = {};
+    trips.forEach(trip => {
+        const key = trip.mode || 'car';
+        if (!byMode[key]) byMode[key] = { trips: 0, net: 0, distance: 0 };
+        byMode[key].trips += 1;
+        byMode[key].net += trip.net || 0;
+        byMode[key].distance += trip.distance || 0;
+    });
+    return Object.entries(byMode).map(([mode, data]) => ({
+        mode,
+        label: OPERATOR_MODES[mode]?.label || mode,
+        ...data,
+    }));
+}
+
+function makeInsight(type, title, body, meta) {
+    return { type, title, body, meta };
+}
+
+function buildInsights(entries) {
+    const trips = entries.flatMap(entry => entry.trips || []);
+    const totals = entries.reduce((acc, entry) => {
+        acc.gross += entry.totals.gross;
+        acc.distance += entry.totals.distance;
+        acc.hours += entry.totals.hours;
+        acc.platform += entry.totals.platform;
+        acc.fuel += entry.totals.fuel;
+        acc.maint += entry.totals.maint;
+        acc.fixed += entry.totals.fixed;
+        acc.trueNet += entry.totals.trueNet;
+        acc.trips += entry.totals.trips;
+        return acc;
+    }, { gross: 0, distance: 0, hours: 0, platform: 0, fuel: 0, maint: 0, fixed: 0, trueNet: 0, trips: 0 });
+    totals.profitPerKm = totals.distance > 0 ? totals.trueNet / totals.distance : 0;
+    totals.profitPerHour = totals.hours > 0 ? totals.trueNet / totals.hours : 0;
+
+    if (!totals.trips && !totals.fixed) return [];
+
+    const insights = [];
+    const fuelPct = totals.gross > 0 ? (totals.fuel / totals.gross) * 100 : 0;
+    const platformPct = totals.gross > 0 ? (totals.platform / totals.gross) * 100 : 0;
+    const fixedPct = totals.gross > 0 ? (totals.fixed / totals.gross) * 100 : 0;
+
+    insights.push(makeInsight(
+        totals.trueNet >= 0 ? 'positive' : 'danger',
+        totals.trueNet >= 0 ? 'You are above costs' : 'You are below break-even',
+        totals.trueNet >= 0
+            ? `You kept ${fmt(totals.trueNet)} after fuel, commission, maintenance, and fixed costs.`
+            : `You need about ${fmt(Math.abs(totals.trueNet))} more to cover recorded costs.`,
+        `${totals.trips} trips · ${totals.distance.toFixed(0)} km`
+    ));
+
+    if (fuelPct >= 30) {
+        insights.push(makeInsight(
+            'warning',
+            'Fuel is taking a lot',
+            `Fuel used ${fuelPct.toFixed(0)}% of gross. Watch pickup distance, AC use, and low-profit long trips.`,
+            `${fmt(totals.fuel)} fuel`
+        ));
+    } else if (totals.gross > 0) {
+        insights.push(makeInsight(
+            'positive',
+            'Fuel share looks controlled',
+            `Fuel used ${fuelPct.toFixed(0)}% of gross in this period.`,
+            `${fmt(totals.fuel)} fuel`
+        ));
+    }
+
+    if (platformPct >= 25) {
+        insights.push(makeInsight(
+            'warning',
+            'Commission is heavy',
+            `Platform fees took ${platformPct.toFixed(0)}% of gross. Compare app trips against offline or lower-commission trips.`,
+            `${fmt(totals.platform)} fees`
+        ));
+    }
+
+    if (fixedPct >= 20) {
+        insights.push(makeInsight(
+            'warning',
+            'Fixed costs are eating income',
+            `Fixed costs used ${fixedPct.toFixed(0)}% of gross. Daily targets should cover this before judging profit.`,
+            `${fmt(totals.fixed)} fixed`
+        ));
+    }
+
+    if (totals.profitPerKm > 0 && totals.profitPerKm < 150) {
+        insights.push(makeInsight(
+            'warning',
+            'Profit per km is thin',
+            `You averaged ${fmt(totals.profitPerKm)}/km. Set a higher minimum fare per km for long trips.`,
+            `${fmt(totals.profitPerHour)}/hr`
+        ));
+    } else if (totals.profitPerKm >= 250) {
+        insights.push(makeInsight(
+            'positive',
+            'Strong profit per km',
+            `You averaged ${fmt(totals.profitPerKm)}/km. Trips like these are worth prioritising.`,
+            `${fmt(totals.profitPerHour)}/hr`
+        ));
+    }
+
+    const platforms = platformBreakdown(trips).filter(item => item.distance > 0);
+    if (platforms.length > 1) {
+        platforms.sort((a, b) => b.profitPerKm - a.profitPerKm);
+        const best = platforms[0];
+        const worst = platforms[platforms.length - 1];
+        insights.push(makeInsight(
+            'neutral',
+            `${best.name} led profit/km`,
+            `${best.name} averaged ${fmt(best.profitPerKm)}/km versus ${worst.name} at ${fmt(worst.profitPerKm)}/km.`,
+            `${best.trips} ${best.name} trips`
+        ));
+    }
+
+    const modes = modeBreakdown(trips);
+    if (modes.length > 1) {
+        modes.sort((a, b) => b.net - a.net);
+        insights.push(makeInsight(
+            'neutral',
+            `${modes[0].label} led take-home`,
+            `${modes[0].label} produced ${fmt(modes[0].net)} across ${modes[0].trips} records in this period.`,
+            'Mixed operator modes'
+        ));
+    }
+
+    const bikeTotals = sumTrips(trips.filter(trip => trip.mode === 'bike'), {});
+    if (bikeTotals.drops > 0) {
+        insights.push(makeInsight(
+            bikeTotals.profitPerDrop >= 300 ? 'positive' : 'warning',
+            'Bike drop average',
+            `Dispatch work averaged ${fmt(bikeTotals.profitPerDrop)} profit per drop.`,
+            `${bikeTotals.drops} drops`
+        ));
+    }
+
+    const kekeTotals = sumTrips(trips.filter(trip => trip.mode === 'keke'), {});
+    if (kekeTotals.passengers > 0) {
+        insights.push(makeInsight(
+            kekeTotals.profitPerPassenger >= 150 ? 'positive' : 'warning',
+            'Keke passenger average',
+            `Keke work averaged ${fmt(kekeTotals.profitPerPassenger)} profit per passenger.`,
+            `${kekeTotals.passengers} passengers`
+        ));
+    }
+
+    return insights.slice(0, 6);
+}
+
+function renderInsights() {
+    const entries = getPeriodEntries(6);
+    const insights = buildInsights(entries);
+    const list = document.getElementById('insightList');
+    const empty = document.getElementById('noInsightsMessage');
+    const label = document.getElementById('insightsPeriodLabel');
+    if (label) label.textContent = 'Last 7 days';
+    if (!list || !empty) return;
+    list.querySelectorAll('.insight-card').forEach(n => n.remove());
+    if (!insights.length) {
+        empty.style.display = '';
+        return;
+    }
+    empty.style.display = 'none';
+    insights.forEach(insight => {
+        const card = document.createElement('div');
+        card.className = `insight-card insight-${insight.type}`;
+        card.innerHTML = `
+            <div class="insight-top">
+                <span class="insight-dot"></span>
+                <div>
+                    <p class="insight-title">${insight.title}</p>
+                    <p class="insight-body">${insight.body}</p>
+                </div>
+            </div>
+            <p class="insight-meta">${insight.meta}</p>`;
+        list.appendChild(card);
+    });
+}
+
 function calcDailyTotals() {
     let totalGross = 0, totalDist = 0, totalHours = 0;
     let totalPlatform = 0, totalFuel = 0, totalLiters = 0, totalMaint = 0, totalNet = 0;
@@ -586,6 +1162,10 @@ function calcDailyTotals() {
 
     const fixedTotal = getFixedCostsTotal();
     const trueNet    = totalNet - fixedTotal;
+    const accountPrompt = document.getElementById('accountPrompt');
+    const todayDateLabel = document.getElementById('todayDateLabel');
+    if (accountPrompt) accountPrompt.style.display = ledgerTrips.length ? '' : 'none';
+    if (todayDateLabel) todayDateLabel.textContent = todayLabel();
 
     // ── Break-even banner ──
     const banner = document.getElementById('breakEvenBanner');
@@ -744,6 +1324,114 @@ async function shareToWhatsApp() {
 }
 
 // ── Tab navigation ──
+function setBackupStatus(message, tone = 'neutral') {
+    const el = document.getElementById('backupStatus');
+    if (!el) return;
+    el.textContent = message;
+    el.className = `data-status status-${tone}`;
+}
+
+function getAllTrips() {
+    saveLedger();
+    return Object.entries(ledgerByDate).flatMap(([date, entry]) =>
+        (entry.trips || []).map(trip => normalizeTrip({ ...trip, date: trip.date || date })));
+}
+
+function downloadText(filename, text, type) {
+    const blob = new Blob([text], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+function csvValue(value) {
+    const text = value == null ? '' : String(value);
+    return `"${text.replace(/"/g, '""')}"`;
+}
+
+function exportTripsCsv() {
+    const trips = getAllTrips();
+    const fields = [
+        'date', 'client_id', 'sync_status', 'mode', 'platform', 'platformPct', 'gross',
+        'distance', 'hours', 'drops', 'failedDrops', 'successfulDrops', 'passengers', 'turns',
+        'platDeduct', 'fuelCost', 'maintCost', 'net', 'revPkm', 'costPkm', 'profPkm',
+        'profitPerDrop', 'costPerDrop', 'profitPerPassenger', 'profitPerTurn',
+        'margin', 'fuelType', 'acWasOn',
+    ];
+    const rows = [fields.join(',')].concat(
+        trips.map(trip => fields.map(field => csvValue(trip[field])).join(','))
+    );
+    downloadText(`driverprofit-trips-${activeDateKey}.csv`, rows.join('\n'), 'text/csv;charset=utf-8');
+    setBackupStatus(`Exported ${trips.length} trip${trips.length === 1 ? '' : 's'} as CSV.`, 'good');
+    trackEvent('Export Trips CSV', { trips: trips.length });
+}
+
+function exportJsonBackup() {
+    saveLedger();
+    const backup = {
+        app: 'DriverProfit',
+        exported_at: new Date().toISOString(),
+        version: STORAGE_VERSION,
+        currentDate: activeDateKey,
+        ledgerByDate,
+        fuelType,
+        operatorMode,
+        fixedCosts: getCurrentFixedCosts(),
+    };
+    downloadText(
+        `driverprofit-backup-${activeDateKey}.json`,
+        JSON.stringify(backup, null, 2),
+        'application/json;charset=utf-8'
+    );
+    setBackupStatus('Backup downloaded. Keep it somewhere safe before changing phones.', 'good');
+    trackEvent('Export JSON Backup', { dates: Object.keys(ledgerByDate).length });
+}
+
+function importJsonBackup(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const backup = JSON.parse(reader.result);
+            const incomingLedger = backup.ledgerByDate || (
+                Array.isArray(backup.trips) ? { [activeDateKey]: { trips: backup.trips, fixedCosts: backup.fixedCosts || fixedCosts } } : null
+            );
+            if (!incomingLedger) throw new Error('No DriverProfit ledger found');
+            const ok = confirm('Restore this backup? This will replace the records currently saved on this phone.');
+            if (!ok) return;
+
+            ledgerByDate = incomingLedger;
+            fuelType = backup.fuelType || fuelType;
+            operatorMode = backup.operatorMode || operatorMode;
+            fixedCosts = backup.fixedCosts || fixedCosts;
+            const todayEntry = ledgerByDate[activeDateKey] || { trips: [], fixedCosts };
+            ledgerTrips = (todayEntry.trips || []).map(normalizeTrip);
+            fixedCosts = todayEntry.fixedCosts || fixedCosts;
+            applyFixedCostsToInputs(fixedCosts);
+            saveLedger();
+            setFuelType(fuelType);
+            applyOperatorMode();
+            renderLedger();
+            calcDailyTotals();
+            renderHistory();
+            renderInsights();
+            setBackupStatus('Backup restored on this phone.', 'good');
+            trackEvent('Import JSON Backup', { dates: Object.keys(ledgerByDate).length });
+        } catch (err) {
+            setBackupStatus('Could not restore that file. Choose a DriverProfit JSON backup.', 'bad');
+        } finally {
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
+}
+
 function showTab(name) {
     const container = document.querySelector('.screen-container');
     const screen = document.getElementById('screen-' + name);
@@ -799,15 +1487,12 @@ function toggleSheet() {
 
 loadLedger();
 
-// Restore fixed cost inputs from saved state
-if (fixedCosts.loan)    document.getElementById('fcLoan').value    = fixedCosts.loan;
-if (fixedCosts.data)    document.getElementById('fcData').value    = fixedCosts.data;
-if (fixedCosts.parking) document.getElementById('fcParking').value = fixedCosts.parking;
-if (fixedCosts.wash)    document.getElementById('fcWash').value    = fixedCosts.wash;
-const _fcInit = fixedCosts.loan + fixedCosts.data + fixedCosts.parking + fixedCosts.wash;
-if (_fcInit > 0) document.getElementById('fcTotal').textContent = fmt(_fcInit);
+applyFixedCostsToInputs(fixedCosts);
+applyOperatorMode();
 
 setFuelType(fuelType);
 updateCurrentTripPreview();
 renderLedger();
 calcDailyTotals();
+renderHistory();
+renderInsights();

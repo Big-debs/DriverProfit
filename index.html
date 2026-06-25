@@ -49,7 +49,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span>Daily Net Profit</span>
+                <span>Today Net Profit</span>
             </div>
             <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">
                 <!-- Sun (visible in dark mode) -->
@@ -109,13 +109,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                         </svg>
-                        Trip Calculator
+                        <span id="logTitleText">Log Trip</span>
                     </h2>
                 </div>
 
                 <div class="card-body">
                     <div>
-                        <label class="field-label">Gross Earnings (₦)</label>
+                        <label id="grossLabel" class="field-label">Gross Earnings (₦)</label>
                         <div class="input-wrap gross-wrap">
                             <span class="input-prefix">₦</span>
                             <input type="number" id="tripGross" inputmode="decimal" placeholder="e.g. 12000"
@@ -125,14 +125,41 @@
 
                     <div class="grid-2">
                         <div>
-                            <label class="field-label">Distance (km)</label>
+                            <label id="distanceLabel" class="field-label">Distance (km)</label>
                             <input type="number" id="tripDistance" inputmode="decimal" placeholder="e.g. 24"
                                    oninput="updateCurrentTripPreview()">
                         </div>
                         <div>
-                            <label class="field-label">Duration (hrs)</label>
+                            <label id="hoursLabel" class="field-label">Duration (hrs)</label>
                             <input type="number" id="tripHours" inputmode="decimal" placeholder="e.g. 1.5"
                                    oninput="updateCurrentTripPreview()">
+                        </div>
+                    </div>
+
+                    <div id="modeExtraFields" class="mode-extra" style="display:none">
+                        <div id="bikeExtraFields" class="grid-2" style="display:none">
+                            <div>
+                                <label class="field-label">Drops</label>
+                                <input type="number" id="tripDrops" inputmode="numeric" placeholder="e.g. 4"
+                                       oninput="updateCurrentTripPreview()">
+                            </div>
+                            <div>
+                                <label class="field-label">Failed Deliveries</label>
+                                <input type="number" id="tripFailedDrops" inputmode="numeric" placeholder="0"
+                                       oninput="updateCurrentTripPreview()">
+                            </div>
+                        </div>
+                        <div id="kekeExtraFields" class="grid-2" style="display:none">
+                            <div>
+                                <label class="field-label">Passengers</label>
+                                <input type="number" id="tripPassengers" inputmode="numeric" placeholder="e.g. 18"
+                                       oninput="updateCurrentTripPreview()">
+                            </div>
+                            <div>
+                                <label class="field-label">Turns / Routes</label>
+                                <input type="number" id="tripTurns" inputmode="numeric" placeholder="e.g. 3"
+                                       oninput="updateCurrentTripPreview()">
+                            </div>
                         </div>
                     </div>
 
@@ -174,13 +201,23 @@
                                 <span id="previewMargin" class="e-val" style="color:var(--green)">0%</span>
                             </div>
                         </div>
+                        <div id="modeMetricStrip" class="mode-metric-strip" style="display:none">
+                            <div>
+                                <span id="modeMetricLabelA" class="e-lbl">Metric</span>
+                                <span id="modeMetricValueA" class="e-val">â‚¦0</span>
+                            </div>
+                            <div>
+                                <span id="modeMetricLabelB" class="e-lbl">Metric</span>
+                                <span id="modeMetricValueB" class="e-val">â‚¦0</span>
+                            </div>
+                        </div>
                     </div>
 
                     <button id="addTripBtn" class="btn-gold" onclick="addTrip()">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Add Trip to Ledger
+                        <span id="addTripLabel">Add Trip to Ledger</span>
                     </button>
                 </div>
             </div><!-- /trip calc -->
@@ -195,7 +232,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                <span>View Daily Statement</span>
+                <span>View Today's Statement</span>
                 <svg style="width:12px;height:12px;opacity:.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
                 </svg>
@@ -208,8 +245,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        Day's Ledger
+                        Today's Ledger
                     </h2>
+                    <span id="todayDateLabel" class="section-note"></span>
                     <button class="btn-ghost-red" onclick="clearLedger()">Clear Day</button>
                 </div>
                 <div class="trip-list" id="tripsList">
@@ -223,9 +261,94 @@
                 </div>
             </div>
 
+            <div id="accountPrompt" class="trust-card" style="display:none">
+                <div>
+                    <p class="trust-title">Your data is saved on this phone.</p>
+                    <p class="trust-copy">Create an account to back it up and see weekly/monthly insights.</p>
+                </div>
+                <button class="btn-soft" type="button" disabled>Account save coming next</button>
+            </div>
+
         </div><!-- /screen-ledger -->
 
         <!-- ── Screen: Settings ── -->
+        <div id="screen-history" class="screen">
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3M5 11h14M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
+                        </svg>
+                        History
+                    </h2>
+                    <span class="section-note">Saved on this phone</span>
+                </div>
+                <div class="history-summary">
+                    <div class="history-pill">
+                        <span class="h-lbl">This Week</span>
+                        <b id="historyWeekNet">â‚¦0</b>
+                        <small id="historyWeekMeta">0 trips</small>
+                    </div>
+                    <div class="history-pill">
+                        <span class="h-lbl">This Month</span>
+                        <b id="historyMonthNet">â‚¦0</b>
+                        <small id="historyMonthMeta">0 trips</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="ledger-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-3.414-3.414A1 1 0 0016.586 3H5a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        Daily Records
+                    </h2>
+                    <span id="historyDayCount" class="section-note">0 days</span>
+                </div>
+                <div id="historyList" class="history-list">
+                    <div id="noHistoryMessage" class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M8 7V3m8 4V3M5 11h14M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
+                        </svg>
+                        <p>No saved days yet.<br><button class="link-btn" onclick="showTab('log')">Log today's first trip</button></p>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /screen-history -->
+
+        <div id="screen-insights" class="screen">
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Insights
+                    </h2>
+                    <span id="insightsPeriodLabel" class="section-note">This week</span>
+                </div>
+                <div id="insightList" class="insight-list">
+                    <div id="noInsightsMessage" class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <p>No insights yet.<br><button class="link-btn" onclick="showTab('log')">Log a trip first</button></p>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /screen-insights -->
+
         <div id="screen-settings" class="screen">
 
             <!-- Pricing & Vehicle -->
@@ -244,6 +367,18 @@
 
                 <div class="card-body">
 
+                    <!-- Operator Mode -->
+                    <div>
+                        <div class="slider-row">
+                            <span class="s-lbl">Operator Mode</span>
+                        </div>
+                        <div class="mode-tabs">
+                            <button id="modeCar" class="mode-tab active" onclick="setOperatorMode('car')">Car</button>
+                            <button id="modeBike" class="mode-tab" onclick="setOperatorMode('bike')">Dispatch Bike</button>
+                            <button id="modeKeke" class="mode-tab" onclick="setOperatorMode('keke')">Keke</button>
+                        </div>
+                    </div>
+
                     <!-- Fuel Type -->
                     <div>
                         <div class="slider-row">
@@ -260,7 +395,7 @@
                     <!-- Platform -->
                     <div>
                         <div class="slider-row">
-                            <span class="s-lbl">Platform Commission</span>
+                            <span id="platformLabel" class="s-lbl">Platform Commission</span>
                             <span id="sliderValDisplay" class="s-val">20.0%</span>
                         </div>
                         <div class="platform-tabs">
@@ -289,7 +424,7 @@
                             </div>
                         </div>
                         <div>
-                            <label class="field-label">Vehicle</label>
+                            <label id="vehicleLabel" class="field-label">Vehicle</label>
                             <select id="efficiency" onchange="handlePresetSelect(this.value)">
                                 <!-- Populated by setFuelType() -->
                             </select>
@@ -416,28 +551,28 @@
                 <div class="card-body">
                     <div class="fc-list">
                         <div class="fc-row">
-                            <span class="fc-label">Car Loan / Hire Purchase</span>
+                            <span id="fcLoanLabel" class="fc-label">Car Loan / Hire Purchase</span>
                             <div class="input-wrap has-prefix fc-input-wrap">
                                 <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
                                 <input type="number" id="fcLoan" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
                             </div>
                         </div>
                         <div class="fc-row">
-                            <span class="fc-label">Data Subscription</span>
+                            <span id="fcDataLabel" class="fc-label">Data Subscription</span>
                             <div class="input-wrap has-prefix fc-input-wrap">
                                 <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
                                 <input type="number" id="fcData" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
                             </div>
                         </div>
                         <div class="fc-row">
-                            <span class="fc-label">Parking / Toll</span>
+                            <span id="fcParkingLabel" class="fc-label">Parking / Toll</span>
                             <div class="input-wrap has-prefix fc-input-wrap">
                                 <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
                                 <input type="number" id="fcParking" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
                             </div>
                         </div>
                         <div class="fc-row">
-                            <span class="fc-label">Car Wash</span>
+                            <span id="fcWashLabel" class="fc-label">Car Wash</span>
                             <div class="input-wrap has-prefix fc-input-wrap">
                                 <span class="input-prefix" style="color:var(--amber);font-size:12px">₦</span>
                                 <input type="number" id="fcWash" inputmode="decimal" placeholder="0" oninput="updateFixedCosts()">
@@ -450,6 +585,30 @@
                     </div>
                 </div>
             </div><!-- /fixed costs -->
+
+            <!-- Data & Backup -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Data &amp; Backup
+                    </h2>
+                    <span class="section-note">Local records</span>
+                </div>
+                <div class="card-body">
+                    <p class="data-copy">Your records are stored on this phone. Export a backup before clearing browser data or changing phones.</p>
+                    <div class="data-actions">
+                        <button class="btn-data" type="button" onclick="exportTripsCsv()">Export CSV</button>
+                        <button class="btn-data" type="button" onclick="exportJsonBackup()">Backup JSON</button>
+                        <button class="btn-data" type="button" onclick="document.getElementById('jsonImportInput').click()">Restore JSON</button>
+                    </div>
+                    <input id="jsonImportInput" type="file" accept="application/json,.json" style="display:none" onchange="importJsonBackup(event)">
+                    <p id="backupStatus" class="data-status"></p>
+                </div>
+            </div><!-- /data backup -->
 
             <!-- Feedback Footer -->
             <div class="feedback-footer">
@@ -604,7 +763,7 @@
                             <div class="guide-num">1</div>
                             <div class="guide-text">
                                 <p class="guide-title">Review Your Trips</p>
-                                <p class="guide-desc">The <b>Ledger</b> tab lists every trip logged today. Each row shows gross, platform fee, fuel used, and net profit. The economics strip shows Rev/km, Cost/km, Profit/km, and Margin for that trip.</p>
+                                <p class="guide-desc">The <b>Today</b> tab lists every trip logged today. Each row shows gross, platform fee, fuel used, and net profit. The economics strip shows Rev/km, Cost/km, Profit/km, and Margin for that trip.</p>
                             </div>
                         </div>
                         <div class="guide-step">
@@ -617,8 +776,8 @@
                         <div class="guide-step">
                             <div class="guide-num">3</div>
                             <div class="guide-text">
-                                <p class="guide-title">View Daily Statement</p>
-                                <p class="guide-desc">Tap <b>View Daily Statement</b> at the top of the Ledger. This sliding panel shows your full-day breakdown: Gross → Platform Fees → Fuel → Maintenance → Fixed Costs → <b>Take-Home Profit</b> and hourly wage.</p>
+                                <p class="guide-title">View Today's Statement</p>
+                                <p class="guide-desc">Tap <b>View Today's Statement</b> at the top of Today. This sliding panel shows your full-day breakdown: Gross → Platform Fees → Fuel → Maintenance → Fixed Costs → <b>Take-Home Profit</b> and hourly wage.</p>
                             </div>
                         </div>
                         <div class="guide-step">
@@ -632,7 +791,7 @@
                             <div class="guide-num">5</div>
                             <div class="guide-text">
                                 <p class="guide-title">Share to WhatsApp</p>
-                                <p class="guide-desc">Inside the Daily Statement, tap <b>Share Summary on WhatsApp</b>. On mobile it shares a screenshot of your statement. On desktop it sends a formatted text report with all figures.</p>
+                                <p class="guide-desc">Inside Today's Statement, tap <b>Share Summary on WhatsApp</b>. On mobile it shares a screenshot of your statement. On desktop it sends a formatted text report with all figures.</p>
                             </div>
                         </div>
                     </div>
@@ -704,7 +863,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Works offline after first install. All trip data is stored locally on your device — nothing is sent to a server.
+                        Works offline after first install. All trip data is stored locally on your device until you choose to back it up.
                     </div>
                 </div>
             </div>
@@ -727,7 +886,21 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
-            <span>Ledger</span>
+            <span>Today</span>
+        </button>
+        <button class="tab-btn" data-tab="history" onclick="showTab('history')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3M5 11h14M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
+            </svg>
+            <span>History</span>
+        </button>
+        <button class="tab-btn" data-tab="insights" onclick="showTab('insights')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span>Insights</span>
         </button>
         <button class="tab-btn" data-tab="settings" onclick="showTab('settings')">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -763,8 +936,8 @@
                     </svg>
                 </div>
                 <div>
-                    <div class="sheet-title">Daily Statement</div>
-                    <div class="sheet-subtitle">Summary of all logged trips</div>
+                    <div class="sheet-title">Today's Statement</div>
+                    <div class="sheet-subtitle">Summary of trips logged today</div>
                 </div>
             </div>
 
